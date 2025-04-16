@@ -62,7 +62,7 @@ Esta aplicación web moderna está diseñada para ayudar a gestores culturales, 
 
 ```bash
 # Clonar el repositorio
-git clone [url-del-repositorio]
+git clone [https://github.com/radiolibrevientosur/gestion-cultural]
 
 # Instalar dependencias
 npm install
