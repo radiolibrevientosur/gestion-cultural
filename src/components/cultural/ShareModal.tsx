@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { toPng } from 'html-to-image';
 import { 
@@ -21,7 +21,7 @@ interface ShareModalProps {
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Texto completo para compartir
@@ -42,22 +42,23 @@ ${event.description}
     }
   };
 
-  const handleDownloadImage = async () => {
+  const handleDownloadImage = () => {
     if (!cardRef.current) return;
 
-    try {
-      const dataUrl = await toPng(cardRef.current, {
-        quality: 1.0,
-        pixelRatio: 2
-      });
-      
+    toPng(cardRef.current, {
+      quality: 1,
+      pixelRatio: 2,
+      cacheBust: true,
+    })
+    .then((dataUrl) => {
       const link = document.createElement('a');
-      link.download = `${event.title.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = `${event.title.toLowerCase().replace(/\s/g, '-')}-flyer.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
-      console.error('Error al generar imagen:', err);
-    }
+    })
+    .catch((error) => {
+      console.error('Error al generar la imagen:', error);
+    });
   };
 
   return (
@@ -71,19 +72,13 @@ ${event.description}
               <Dialog.Title className="text-xl font-semibold">
                 Compartir Evento
               </Dialog.Title>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500"
-              >
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            {/* Tarjeta de preview */}
-            <div
-              ref={cardRef}
-              className="bg-white p-6 rounded-lg shadow-md mb-6"
-            >
+            {/* Tarjeta para descarga */}
+            <div ref={cardRef} className="bg-white p-6 rounded-lg shadow-md mb-6">
               {event.image && (
                 <img
                   src={event.image}
@@ -92,58 +87,58 @@ ${event.description}
                 />
               )}
               
-              <h3 className="text-xl font-bold">{event.title}</h3>
-              <p className="text-gray-600 mt-2">{event.description}</p>
-              
-              <div className="mt-4 space-y-2 text-sm text-gray-500">
-                <p>📅 {format(event.date, "d 'de' MMMM, yyyy", { locale: es })}</p>
-                <p>🕒 {format(event.date, 'HH:mm')}</p>
-                <p>📍 {event.location}</p>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900">{event.title}</h3>
+                <p className="text-gray-600">{event.description}</p>
+                
+                <div className="mt-4 space-y-1 text-sm text-gray-700">
+                  <p>📅 {format(event.date, "d 'de' MMMM yyyy", { locale: es })}</p>
+                  <p>🕒 {format(event.date, 'HH:mm')} horas</p>
+                  <p>📍 {event.location}</p>
+                </div>
               </div>
             </div>
 
-            {/* Opciones de compartir */}
-            <div className="space-y-6">
-              {/* Botones redes sociales */}
-              <div className="flex justify-center space-x-4">
+            {/* Controles de compartir */}
+            <div className="space-y-4">
+              <div className="flex justify-center gap-4">
                 <WhatsappShareButton title={shareText}>
-                  <WhatsappIcon size={40} round />
+                  <WhatsappIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </WhatsappShareButton>
                 
                 <FacebookShareButton quote={shareText}>
-                  <FacebookIcon size={40} round />
+                  <FacebookIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </FacebookShareButton>
                 
-                <TwitterShareButton title={shareText} hashtags={['Cultura']}>
-                  <TwitterIcon size={40} round />
+                <TwitterShareButton title={shareText}>
+                  <TwitterIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </TwitterShareButton>
               </div>
 
-              {/* Botones de acción */}
-              <div className="flex justify-center space-x-4">
+              <div className="flex justify-center gap-4">
                 <button
                   onClick={handleCopyText}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   {copied ? (
                     <>
-                      <Check className="h-5 w-5 mr-2 text-green-500" />
-                      <span>¡Texto copiado!</span>
+                      <Check className="h-5 w-5 mr-2 text-green-600" />
+                      Copiado!
                     </>
                   ) : (
                     <>
                       <Copy className="h-5 w-5 mr-2" />
-                      <span>Copiar texto</span>
+                      Copiar texto
                     </>
                   )}
                 </button>
 
                 <button
                   onClick={handleDownloadImage}
-                  className="flex items-center px-4 py-2 bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Download className="h-5 w-5 mr-2" />
-                  <span>Descargar imagen</span>
+                  Descargar flyer
                 </button>
               </div>
             </div>
