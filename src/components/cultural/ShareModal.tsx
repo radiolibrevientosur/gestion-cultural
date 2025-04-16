@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { Dialog } from '@headlessui/react';
-import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { 
   WhatsappShareButton, 
