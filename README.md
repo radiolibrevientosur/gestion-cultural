@@ -119,7 +119,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 Para más información sobre el proyecto o consultas técnicas, contactar a:
 
 - Email: [douglasdonaire@gmail.com]
-- Twitter: [@douglasdonaire]
+- Instagram: [@douglasdonaire]
 
 ## 🙏 Agradecimientos
 
