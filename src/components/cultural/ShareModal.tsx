@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { Dialog } from '@headlessui/react';
-import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { 
   WhatsappShareButton, 
@@ -24,22 +23,22 @@ interface ShareModalProps {
 export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }) => {
   const [copied, setCopied] = React.useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
-  const shareMessage = `
+  // Texto completo para compartir
+  const shareText = `
 📢 ${event.title}
 📅 ${format(event.date, "d 'de' MMMM", { locale: es })} | 🕒 ${format(event.date, 'HH:mm')}
 📍 ${event.location}
-🔗 ${eventUrl}
+${event.description}
   `.trim();
 
-  const handleCopyLink = async () => {
+  const handleCopyText = async () => {
     try {
-      await navigator.clipboard.writeText(eventUrl);
+      await navigator.clipboard.writeText(shareText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Error al copiar:', err);
     }
   };
 
@@ -57,7 +56,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Failed to generate image:', err);
+      console.error('Error al generar imagen:', err);
     }
   };
 
@@ -80,28 +79,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
               </button>
             </div>
 
-            {/* Preview Card */}
+            {/* Tarjeta de preview */}
             <div
               ref={cardRef}
               className="bg-white p-6 rounded-lg shadow-md mb-6"
             >
-              <div className="flex justify-between items-start">
-                {event.image && (
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-32 h-32 object-cover rounded-lg"
-                  />
-                )}
-                <QRCodeSVG
-                  value={eventUrl}
-                  size={96}
-                  level="H"
-                  includeMargin={true}
+              {event.image && (
+                <img
+                  src={event.image}
+                  alt={event.title}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
                 />
-              </div>
+              )}
               
-              <h3 className="text-xl font-bold mt-4">{event.title}</h3>
+              <h3 className="text-xl font-bold">{event.title}</h3>
               <p className="text-gray-600 mt-2">{event.description}</p>
               
               <div className="mt-4 space-y-2 text-sm text-gray-500">
@@ -111,38 +102,38 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
               </div>
             </div>
 
-            {/* Share Options */}
+            {/* Opciones de compartir */}
             <div className="space-y-6">
-              {/* Social Media Buttons */}
+              {/* Botones redes sociales */}
               <div className="flex justify-center space-x-4">
-                <WhatsappShareButton url={eventUrl} title={shareMessage}>
+                <WhatsappShareButton title={shareText}>
                   <WhatsappIcon size={40} round />
                 </WhatsappShareButton>
                 
-                <FacebookShareButton url={eventUrl} quote={shareMessage}>
+                <FacebookShareButton quote={shareText}>
                   <FacebookIcon size={40} round />
                 </FacebookShareButton>
                 
-                <TwitterShareButton url={eventUrl} title={shareMessage} hashtags={['Cultura']}>
+                <TwitterShareButton title={shareText} hashtags={['Cultura']}>
                   <TwitterIcon size={40} round />
                 </TwitterShareButton>
               </div>
 
-              {/* Copy Link Button */}
+              {/* Botones de acción */}
               <div className="flex justify-center space-x-4">
                 <button
-                  onClick={handleCopyLink}
+                  onClick={handleCopyText}
                   className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   {copied ? (
                     <>
                       <Check className="h-5 w-5 mr-2 text-green-500" />
-                      <span>¡Copiado!</span>
+                      <span>¡Texto copiado!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-5 w-5 mr-2" />
-                      <span>Copiar enlace</span>
+                      <span>Copiar texto</span>
                     </>
                   )}
                 </button>
