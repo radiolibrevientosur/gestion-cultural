@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { Dialog } from '@headlessui/react';
+import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { 
   WhatsappShareButton, 
@@ -21,25 +22,24 @@ interface ShareModalProps {
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
-  // Texto completo para compartir
-  const shareText = `
+  const shareMessage = `
 📢 ${event.title}
 📅 ${format(event.date, "d 'de' MMMM", { locale: es })} | 🕒 ${format(event.date, 'HH:mm')}
 📍 ${event.location}
-${event.description}
+🔗 ${eventUrl}
   `.trim();
 
-  const handleCopyText = async () => {
+  const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareText);
+      await navigator.clipboard.writeText(eventUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Error al copiar:', err);
-      alert('No se pudo copiar el texto. Por favor, inténtalo de nuevo.');
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -48,17 +48,16 @@ ${event.description}
 
     try {
       const dataUrl = await toPng(cardRef.current, {
-        quality: 1,
-        pixelRatio: 2,
-        cacheBust: true,
+        quality: 1.0,
+        pixelRatio: 2
       });
+      
       const link = document.createElement('a');
-      link.download = `${event.title.toLowerCase().replace(/\s/g, '-')}-flyer.png`;
+      link.download = `${event.title.toLowerCase().replace(/\s+/g, '-')}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (error) {
-      console.error('Error al generar la imagen:', error);
-      alert('No se pudo generar la imagen. Por favor, inténtalo de nuevo.');
+    } catch (err) {
+      console.error('Failed to generate image:', err);
     }
   };
 
@@ -73,77 +72,87 @@ ${event.description}
               <Dialog.Title className="text-xl font-semibold">
                 Compartir Evento
               </Dialog.Title>
-              <button 
-                onClick={onClose} 
+              <button
+                onClick={onClose}
                 className="text-gray-400 hover:text-gray-500"
-                aria-label="Cerrar modal"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            {/* Tarjeta para descarga */}
-            <div ref={cardRef} className="bg-white p-6 rounded-lg shadow-md mb-6">
-              {event.image && (
-                <img
-                  src={event.image}
-                  alt={`Imagen del evento ${event.title}`}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+            {/* Preview Card */}
+            <div
+              ref={cardRef}
+              className="bg-white p-6 rounded-lg shadow-md mb-6"
+            >
+              <div className="flex justify-between items-start">
+                {event.image && (
+                  <img
+                    src={event.image}
+                    alt={event.title}
+                    className="w-32 h-32 object-cover rounded-lg"
+                  />
+                )}
+                <QRCodeSVG
+                  value={eventUrl}
+                  size={96}
+                  level="H"
+                  includeMargin={true}
                 />
-              )}
+              </div>
               
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-gray-900">{event.title}</h3>
-                <p className="text-gray-600">{event.description}</p>
-                
-                <div className="mt-4 space-y-1 text-sm text-gray-700">
-                  <p>📅 {format(event.date, "d 'de' MMMM yyyy", { locale: es })}</p>
-                  <p>🕒 {format(event.date, 'HH:mm')} horas</p>
-                  <p>📍 {event.location}</p>
-                </div>
+              <h3 className="text-xl font-bold mt-4">{event.title}</h3>
+              <p className="text-gray-600 mt-2">{event.description}</p>
+              
+              <div className="mt-4 space-y-2 text-sm text-gray-500">
+                <p>📅 {format(event.date, "d 'de' MMMM, yyyy", { locale: es })}</p>
+                <p>🕒 {format(event.date, 'HH:mm')}</p>
+                <p>📍 {event.location}</p>
               </div>
             </div>
 
-            {/* Controles de compartir */}
-            <div className="space-y-4">
-              <div className="flex justify-center gap-4">
-                <WhatsappShareButton title={shareText} url={window.location.href}>
-                  <WhatsappIcon size={40} round className="hover:opacity-80 transition-opacity" />
+            {/* Share Options */}
+            <div className="space-y-6">
+              {/* Social Media Buttons */}
+              <div className="flex justify-center space-x-4">
+                <WhatsappShareButton url={eventUrl} title={shareMessage}>
+                  <WhatsappIcon size={40} round />
                 </WhatsappShareButton>
                 
-                <FacebookShareButton quote={shareText} url={window.location.href}>
-                  <FacebookIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                <FacebookShareButton url={eventUrl} quote={shareMessage}>
+                  <FacebookIcon size={40} round />
                 </FacebookShareButton>
                 
-                <TwitterShareButton title={shareText} url={window.location.href}>
-                  <TwitterIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                <TwitterShareButton url={eventUrl} title={shareMessage} hashtags={['Cultura']}>
+                  <TwitterIcon size={40} round />
                 </TwitterShareButton>
               </div>
 
-              <div className="flex justify-center gap-4">
+              {/* Copy Link Button */}
+              <div className="flex justify-center space-x-4">
                 <button
-                  onClick={handleCopyText}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={handleCopyLink}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   {copied ? (
                     <>
-                      <Check className="h-5 w-5 mr-2 text-green-600" />
-                      Copiado!
+                      <Check className="h-5 w-5 mr-2 text-green-500" />
+                      <span>¡Copiado!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-5 w-5 mr-2" />
-                      Copiar texto
+                      <span>Copiar enlace</span>
                     </>
                   )}
                 </button>
 
                 <button
                   onClick={handleDownloadImage}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center px-4 py-2 bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
                 >
                   <Download className="h-5 w-5 mr-2" />
-                  Descargar flyer
+                  <span>Descargar imagen</span>
                 </button>
               </div>
             </div>
