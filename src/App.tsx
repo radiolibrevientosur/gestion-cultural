@@ -223,6 +223,10 @@ function App() {
         return <TaskForm onComplete={() => setActiveView('inicio')} />;
       case 'favoritos':
         return <Favorites />;
+        case 'calendario':
+      return <CalendarView />;
+    default:
+      return <Dashboard />;
       case 'perfil':
         return <Profile />;
       default:
@@ -286,15 +290,16 @@ function App() {
                 <Heart className="h-6 w-6" />
                 <span className="mt-1 text-xs">Favoritos</span>
               </button>
-              <button
-                onClick={() => setActiveView('calendario')}
-                className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  activeView === 'calendario' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                <Calendar className="h-6 w-6" />
-                <span className="mt-1 text-xs">Calendario</span>
-              </button>
+             {/* Botón Calendario - Versión Corregida */}
+<button
+  onClick={() => setActiveView('calendario')}
+  className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
+    activeView === 'calendario' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
+  }`}
+>
+  <Calendar className="h-6 w-6" />
+  <span className="mt-1 text-xs">Calendario</span>
+</button>
               <button
                 onClick={() => setActiveView('perfil')}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
