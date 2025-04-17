@@ -22,6 +22,15 @@ export type ReminderConfig = {
   type: 'notification' | 'both';
 };
 
+/* Nuevo tipo para elementos del calendario */
+export type CalendarItem = {
+  date: Date;
+  type: 'event' | 'birthday' | 'task';
+  title: string;
+  color: string;
+};
+
+/* Modificación en la interfaz CulturalEvent */
 export interface CulturalEvent {
   id: string;
   title: string;
@@ -46,6 +55,11 @@ export interface CulturalEvent {
   isFavorite: boolean;
   recurrence?: RecurrenceConfig;
   reminder?: ReminderConfig;
+  /* Nueva propiedad opcional para metadatos del calendario */
+  calendarMetadata?: {
+    color: string;
+    icon: string;
+  };
 }
 
 export interface ArtistBirthday {
