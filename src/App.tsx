@@ -1,3 +1,203 @@
+import React, { useState } from 'react';
+import { CulturalProvider } from './context/CulturalContext';
+import { Calendar, Heart, UserCircle, Home, PlusCircle } from 'lucide-react';
+import { EventoCulturalForm } from './components/cultural/EventoCulturalForm';
+import { BirthdayForm } from './components/cultural/BirthdayForm';
+import { TaskForm } from './components/cultural/TaskForm';
+import { EventCard } from './components/cultural/EventCard';
+import { BirthdayCulturalCard } from './components/cultural/BirthdayCulturalCard';
+import { TaskCulturalKanban } from './components/cultural/TaskCulturalKanban';
+import { CalendarButton } from './components/cultural/CalendarButton';
+import { useCultural } from './context/CulturalContext';
+import type { CulturalEvent } from './types/cultural';
+
+type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'perfil' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea';
+
+function Dashboard() {
+  const { state } = useCultural();
+  const [editingEvent, setEditingEvent] = useState<CulturalEvent | null>(null);
+  
+  return (
+    <div className="space-y-8">
+      {/* Eventos Culturales */}
+      <section>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Eventos Culturales</h2>
+        {state.events.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {state.events.map(event => (
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                onEdit={(event) => setEditingEvent(event)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No hay eventos creados</p>
+        )}
+      </section>
+
+      {/* Próximos Cumpleaños */}
+      <section>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Próximos Cumpleaños</h2>
+        {state.birthdays.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {state.birthdays.map(birthday => (
+              <BirthdayCulturalCard key={birthday.id} birthday={birthday} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No hay cumpleaños registrados</p>
+        )}
+      </section>
+
+      {/* Tareas */}
+      <section>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Tareas</h2>
+        {state.tasks.length > 0 ? (
+          <TaskCulturalKanban />
+        ) : (
+          <p className="text-gray-500">No hay tareas creadas</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CreateMenu({ onSelectOption }: { onSelectOption: (view: ActiveView) => void }) {
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Crear Nuevo</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button 
+          onClick={() => onSelectOption('nuevo-evento')}
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
+        >
+          <h3 className="font-medium text-lg text-cultural-escenicas mb-2">Evento Cultural</h3>
+          <p className="text-sm text-gray-500">Crear un nuevo evento cultural con todos los detalles</p>
+        </button>
+        <button 
+          onClick={() => onSelectOption('nuevo-cumpleanos')}
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
+        >
+          <h3 className="font-medium text-lg text-cultural-visuales mb-2">Cumpleaños</h3>
+          <p className="text-sm text-gray-500">Agregar un nuevo cumpleaños al calendario</p>
+        </button>
+        <button 
+          onClick={() => onSelectOption('nueva-tarea')}
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
+        >
+          <h3 className="font-medium text-lg text-cultural-musicales mb-2">Tarea</h3>
+          <p className="text-sm text-gray-500">Crear una nueva tarea o recordatorio</p>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Favorites() {
+  const { state } = useCultural();
+  
+  const favoriteEvents = state.events.filter(event => event.isFavorite);
+  const favoriteBirthdays = state.birthdays.filter(birthday => birthday.isFavorite);
+  const favoriteTasks = state.tasks.filter(task => task.isFavorite);
+  
+  return (
+    <div className="p-4 space-y-8">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Favoritos</h2>
+      
+      {/* Eventos Favoritos */}
+      <section>
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Eventos Favoritos</h3>
+        {favoriteEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favoriteEvents.map(event => (
+              <EventCard 
+                key={event.id} 
+                event={event}
+                onEdit={() => {}} // Handle edit in favorites view
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No hay eventos favoritos</p>
+        )}
+      </section>
+
+      {/* Cumpleaños Favoritos */}
+      <section>
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Cumpleaños Favoritos</h3>
+        {favoriteBirthdays.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favoriteBirthdays.map(birthday => (
+              <BirthdayCulturalCard key={birthday.id} birthday={birthday} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No hay cumpleaños favoritos</p>
+        )}
+      </section>
+
+      {/* Tareas Favoritas */}
+      <section>
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Tareas Favoritas</h3>
+        {favoriteTasks.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favoriteTasks.map(task => (
+              <div key={task.id} className="bg-white rounded-lg shadow p-4">
+                <h4 className="font-medium">{task.title}</h4>
+                <p className="text-sm text-gray-500">{task.description}</p>
+                <div className="mt-2 text-sm">
+                  <span className={`inline-block px-2 py-1 rounded ${
+                    task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {task.priority}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No hay tareas favoritas</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function Profile() {
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Perfil</h2>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nombre</label>
+            <input
+              type="text"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              placeholder="Tu nombre"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Biografía</label>
+            <textarea
+              rows={4}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              placeholder="Cuéntanos sobre ti..."
+            />
+          </div>
+          <button className="w-full bg-cultural-escenicas text-white py-2 px-4 rounded-md hover:bg-cultural-escenicas/90 transition-colors">
+            Guardar Cambios
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [activeView, setActiveView] = useState<ActiveView>('inicio');
 
@@ -23,7 +223,6 @@ function App() {
   return (
     <CulturalProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Encabezado */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
@@ -31,18 +230,23 @@ function App() {
                 <Calendar className="h-8 w-8 text-cultural-escenicas" />
                 <span className="ml-2 text-xl font-semibold">Gestión Cultural</span>
               </div>
+              <div>
+                <CalendarButton
+                  onCreateEvent={() => setActiveView('nuevo-evento')}
+                  onCreateBirthday={() => setActiveView('nuevo-cumpleanos')}
+                  onCreateTask={() => setActiveView('nueva-tarea')}
+                />
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Contenido Principal */}
         <main className="flex-1 max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8 mb-16">
           <div className="px-4 py-6 sm:px-0">
             {renderView()}
           </div>
         </main>
 
-        {/* Pie de Página */}
         <nav className="bg-white border-t border-gray-200 fixed bottom-0 w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-around h-16">
@@ -73,12 +277,6 @@ function App() {
                 <Heart className="h-6 w-6" />
                 <span className="mt-1 text-xs">Favoritos</span>
               </button>
-              {/* Botón de Calendario */}
-              <CalendarButton
-                onCreateEvent={() => setActiveView('nuevo-evento')}
-                onCreateBirthday={() => setActiveView('nuevo-cumpleanos')}
-                onCreateTask={() => setActiveView('nueva-tarea')}
-              />
               <button
                 onClick={() => setActiveView('perfil')}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 ${
