@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCultural } from '../../context/CulturalContext';
-import { ImageUpload } from '../ui/ImageUpload';
 import type { ArtistBirthday } from '../../types/cultural';
 
 const birthdaySchema = z.object({
@@ -16,10 +15,7 @@ const birthdaySchema = z.object({
     email: z.string().email('Email inválido'),
     phone: z.string().min(6, 'El teléfono es requerido')
   }),
-  image: z.object({
-    data: z.string(),
-    type: z.string()
-  }).optional(),
+  image: z.string().optional(),
   isFavorite: z.boolean().default(false)
 });
 
@@ -29,16 +25,12 @@ interface BirthdayFormProps {
 
 export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
   const { dispatch } = useCultural();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ArtistBirthday>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ArtistBirthday>({
     resolver: zodResolver(birthdaySchema),
     defaultValues: {
       isFavorite: false
     }
   });
-
-  const handleImageChange = (image: { data: string; type: string } | undefined) => {
-    setValue('image', image);
-  };
 
   const onSubmit = (data: any) => {
     dispatch({
@@ -53,30 +45,19 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+    <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="px-6 py-4 bg-cultural-visuales text-white">
         <h2 className="text-xl font-bold">Nuevo Cumpleaños</h2>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            Imagen
-          </label>
-          <ImageUpload
-            value={watch('image')}
-            onChange={handleImageChange}
-            className="w-full"
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre</label>
+            <label className="block text-sm font-medium text-gray-700">Nombre</label>
             <input
               type="text"
               {...register('name')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -84,11 +65,11 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Fecha de Nacimiento</label>
+            <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
             <input
               type="date"
               {...register('birthDate')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
             />
             {errors.birthDate && (
               <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
@@ -96,11 +77,11 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Rol</label>
+            <label className="block text-sm font-medium text-gray-700">Rol</label>
             <input
               type="text"
               {...register('role')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
               placeholder="Ej: Actor, Director, Músico..."
             />
             {errors.role && (
@@ -109,10 +90,10 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Disciplina Artística</label>
+            <label className="block text-sm font-medium text-gray-700">Disciplina Artística</label>
             <select
               {...register('discipline')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
             >
               <option value="">Seleccionar disciplina...</option>
               <option value="Teatro">Teatro</option>
@@ -129,11 +110,11 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               {...register('contactInfo.email')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
             />
             {errors.contactInfo?.email && (
               <p className="mt-1 text-sm text-red-600">{errors.contactInfo.email.message}</p>
@@ -141,11 +122,11 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Teléfono</label>
+            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
             <input
               type="tel"
               {...register('contactInfo.phone')}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
             />
             {errors.contactInfo?.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.contactInfo.phone.message}</p>
@@ -154,22 +135,32 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Trayectoria</label>
+          <label className="block text-sm font-medium text-gray-700">Trayectoria</label>
           <textarea
             {...register('trajectory')}
             rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
           />
           {errors.trajectory && (
             <p className="mt-1 text-sm text-red-600">{errors.trajectory.message}</p>
           )}
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700">URL de la Imagen</label>
+          <input
+            type="url"
+            {...register('image')}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            placeholder="https://ejemplo.com/imagen.jpg"
+          />
+        </div>
+
         <div className="flex justify-end space-x-4">
           <button
             type="button"
             onClick={() => onComplete?.()}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancelar
           </button>
