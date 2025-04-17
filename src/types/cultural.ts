@@ -11,15 +11,9 @@ export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
 export type RecurrenceConfig = {
   type: RecurrenceType;
-  interval?: number;
+  interval?: number; // For custom recurrence
   endDate?: Date;
-  daysOfWeek?: number[];
-};
-
-export type ReminderConfig = {
-  enabled: boolean;
-  time: number; // minutes before event
-  type: 'notification' | 'both';
+  daysOfWeek?: number[]; // 0-6 for Sunday-Saturday
 };
 
 export interface CulturalEvent {
@@ -39,13 +33,12 @@ export interface CulturalEvent {
   };
   technicalRequirements: string[];
   image?: {
-    data: string;
-    type: string;
+    data: string; // Base64 encoded image data
+    type: string; // MIME type
   };
   tags: string[];
   isFavorite: boolean;
   recurrence?: RecurrenceConfig;
-  reminder?: ReminderConfig;
 }
 
 export interface ArtistBirthday {
@@ -60,11 +53,10 @@ export interface ArtistBirthday {
     phone: string;
   };
   image?: {
-    data: string;
-    type: string;
+    data: string; // Base64 encoded image data
+    type: string; // MIME type
   };
   isFavorite: boolean;
-  reminder?: ReminderConfig;
 }
 
 export interface CulturalTask {
@@ -82,7 +74,6 @@ export interface CulturalTask {
     completed: boolean;
   }[];
   isFavorite: boolean;
-  reminder?: ReminderConfig;
 }
 
 export interface ThemeConfig {

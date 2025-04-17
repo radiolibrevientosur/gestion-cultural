@@ -95,7 +95,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
                 )}
                 <QRCodeSVG
                   value={eventUrl}
-                  size={48}  // Reducido al 50% del tamaño original
+                  size={96}
                   level="H"
                   includeMargin={true}
                 />

@@ -57,10 +57,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, class
       ) : (
         <div
           onClick={() => inputRef.current?.click()}
-          className="w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
         >
-          <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-          <span className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <Upload className="h-8 w-8 text-gray-400" />
+          <span className="mt-2 text-sm text-gray-500">
             Click para subir imagen (JPG/PNG)
           </span>
         </div>
