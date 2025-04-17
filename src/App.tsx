@@ -282,11 +282,7 @@ function App() {
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 ${
                   activeView === 'perfil' ? 'text-cultural-musicales' : 'text-gray-500'
                 }`}
-              ><CalendarButton/>
-                onCreateEvent={() => setActiveView('nuevo-evento')}
-                onCreateBirthday={() => setActiveView('nuevo-cumpleanos')}
-                onCreateTask={() => setActiveView('nueva-tarea')}
-               >
+              >
                 <UserCircle className="h-6 w-6" />
                 <span className="mt-1 text-xs">Perfil</span>
               </button>
