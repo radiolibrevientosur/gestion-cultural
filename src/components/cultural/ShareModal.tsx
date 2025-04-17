@@ -39,26 +39,27 @@ ${event.description}
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Error al copiar:', err);
+      alert('No se pudo copiar el texto. Por favor, inténtalo de nuevo.');
     }
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     if (!cardRef.current) return;
 
-    toPng(cardRef.current, {
-      quality: 1,
-      pixelRatio: 2,
-      cacheBust: true,
-    })
-    .then((dataUrl) => {
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 2,
+        cacheBust: true,
+      });
       const link = document.createElement('a');
       link.download = `${event.title.toLowerCase().replace(/\s/g, '-')}-flyer.png`;
       link.href = dataUrl;
       link.click();
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error('Error al generar la imagen:', error);
-    });
+      alert('No se pudo generar la imagen. Por favor, inténtalo de nuevo.');
+    }
   };
 
   return (
@@ -72,7 +73,11 @@ ${event.description}
               <Dialog.Title className="text-xl font-semibold">
                 Compartir Evento
               </Dialog.Title>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+              <button 
+                onClick={onClose} 
+                className="text-gray-400 hover:text-gray-500"
+                aria-label="Cerrar modal"
+              >
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -82,7 +87,7 @@ ${event.description}
               {event.image && (
                 <img
                   src={event.image}
-                  alt={event.title}
+                  alt={`Imagen del evento ${event.title}`}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />
               )}
@@ -102,15 +107,15 @@ ${event.description}
             {/* Controles de compartir */}
             <div className="space-y-4">
               <div className="flex justify-center gap-4">
-                <WhatsappShareButton title={shareText}>
+                <WhatsappShareButton title={shareText} url={window.location.href}>
                   <WhatsappIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </WhatsappShareButton>
                 
-                <FacebookShareButton quote={shareText}>
+                <FacebookShareButton quote={shareText} url={window.location.href}>
                   <FacebookIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </FacebookShareButton>
                 
-                <TwitterShareButton title={shareText}>
+                <TwitterShareButton title={shareText} url={window.location.href}>
                   <TwitterIcon size={40} round className="hover:opacity-80 transition-opacity" />
                 </TwitterShareButton>
               </div>
