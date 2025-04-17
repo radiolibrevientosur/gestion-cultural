@@ -12,6 +12,7 @@ type CulturalAction =
   | { type: 'UPDATE_EVENT'; payload: CulturalEvent }
   | { type: 'DELETE_EVENT'; payload: string }
   | { type: 'ADD_BIRTHDAY'; payload: ArtistBirthday }
+  | { type: 'UPDATE_BIRTHDAY'; payload: ArtistBirthday }
   | { type: 'ADD_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: CulturalTask['status'] } }
   | { type: 'LOAD_STATE'; payload: CulturalState };
@@ -76,6 +77,14 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
       break;
     case 'ADD_BIRTHDAY':
       newState = { ...state, birthdays: [...state.birthdays, action.payload] };
+      break;
+    case 'UPDATE_BIRTHDAY':
+      newState = {
+        ...state,
+        birthdays: state.birthdays.map(birthday =>
+          birthday.id === action.payload.id ? action.payload : birthday
+        )
+      };
       break;
     case 'ADD_TASK':
       newState = { ...state, tasks: [...state.tasks, action.payload] };
