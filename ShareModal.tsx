@@ -25,7 +25,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
   const [copied, setCopied] = React.useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const eventUrl = `${window.location.origin}/evento/${event.id}`;
-
   // En la constante shareMessage, cambiar:
 // En ShareModal.tsx
 const shareMessage = `
@@ -90,13 +89,13 @@ ${event.cost.type === 'free' ? '🎟️ Entrada gratuita' : `💵 Precio: $${eve
             {/* Tarjeta de previsualización */}
             <div ref={cardRef} className="bg-white p-6 rounded-lg shadow-md mb-6">
               <div className="flex justify-between items-start">
-                {event.imageBase64 && (
-                  <img
-                    src={event.imageBase64}
-                    alt={event.title}
-                    className="w-32 h-32 object-cover rounded-lg"
-                  />
-                )}
+               {event.image?.data && (
+  <img
+    src={event.image.data}
+    alt={event.title}
+    className="w-32 h-32 object-cover rounded-lg"
+  />
+)}
                 <QRCodeSVG
                   value={eventUrl}
                   size={96}
