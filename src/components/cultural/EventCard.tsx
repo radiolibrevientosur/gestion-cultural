@@ -121,11 +121,11 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
         </div>
       </div>
 
-      <ShareModal
-        event={event}
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-      />
+     <ShareModal
+  event={event}
+  isOpen={isShareModalOpen}
+  onClose={() => setIsShareModalOpen(false)}
+/>
     </>
   );
 };
