@@ -65,7 +65,11 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ onComplete }) => 
     try {
       dispatch({
         type: 'ADD_EVENT',
-        payload: { ...data, id: crypto.randomUUID(), date: new Date(data.date) }
+        payload: {
+          ...data, id: crypto.randomUUID(),
+          date: new Date(data.date),
+          imageBase64: data.image ? data.image.data : null
+        }
       });
       onComplete?.();
     } catch (error) {

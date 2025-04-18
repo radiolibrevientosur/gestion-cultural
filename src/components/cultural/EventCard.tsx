@@ -34,10 +34,10 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        {event.image && (
+        {event.imageBase64 && (
           <div className="relative h-48 w-full">
             <img
-              src={event.image}
+              src={event.imageBase64}
               alt={event.title}
               className="w-full h-full object-cover"
             />
