@@ -26,19 +26,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
   const cardRef = useRef<HTMLDivElement>(null);
   const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
-  // Modificar la constante shareMessage
-const shareMessage = `
+  // Mensaje personalizado para compartir
+  const shareMessage = `
 🎉 ¡Únete a este evento cultural!
 
 📢 ${event.title}
 📅 ${format(event.date, "d 'de' MMMM", { locale: es })} | 🕒 ${format(event.date, 'HH:mm')}
 📍 ${event.location}
-🎭 Tipo: ${event.eventType} - ${event.discipline}
+👥 Público: ${event.targetAudience}
+🎭 ${event.eventType} - ${event.discipline}
 
 ${event.description}
 
-🔗 Más información y reservas: ${eventUrl}
-`.trim();
+🔗 Más información: ${eventUrl}
+  `.trim();
 
   const handleCopyLink = async () => {
     try {
@@ -46,7 +47,7 @@ ${event.description}
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Error al copiar:', err);
     }
   };
 
@@ -64,7 +65,7 @@ ${event.description}
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Failed to generate image:', err);
+      console.error('Error al generar imagen:', err);
     }
   };
 
@@ -79,23 +80,17 @@ ${event.description}
               <Dialog.Title className="text-xl font-semibold">
                 Compartir Evento
               </Dialog.Title>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500"
-              >
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            {/* Preview Card */}
-            <div
-              ref={cardRef}
-              className="bg-white p-6 rounded-lg shadow-md mb-6"
-            >
+            {/* Tarjeta de previsualización */}
+            <div ref={cardRef} className="bg-white p-6 rounded-lg shadow-md mb-6">
               <div className="flex justify-between items-start">
-                {event.image && (
+                {event.imageBase64 && (
                   <img
-                    src={event.image}
+                    src={event.imageBase64}
                     alt={event.title}
                     className="w-32 h-32 object-cover rounded-lg"
                   />
@@ -115,12 +110,13 @@ ${event.description}
                 <p>📅 {format(event.date, "d 'de' MMMM, yyyy", { locale: es })}</p>
                 <p>🕒 {format(event.date, 'HH:mm')}</p>
                 <p>📍 {event.location}</p>
+                <p>👥 {event.targetAudience}</p>
+                <p>🎭 {event.eventType} - {event.discipline}</p>
               </div>
             </div>
 
-            {/* Share Options */}
+            {/* Botones de compartir */}
             <div className="space-y-6">
-              {/* Social Media Buttons */}
               <div className="flex justify-center space-x-4">
                 <WhatsappShareButton url={eventUrl} title={shareMessage}>
                   <WhatsappIcon size={40} round />
@@ -135,7 +131,6 @@ ${event.description}
                 </TwitterShareButton>
               </div>
 
-              {/* Copy Link Button */}
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={handleCopyLink}
@@ -144,12 +139,12 @@ ${event.description}
                   {copied ? (
                     <>
                       <Check className="h-5 w-5 mr-2 text-green-500" />
-                      <span>¡Copiado!</span>
+                      ¡Copiado!
                     </>
                   ) : (
                     <>
                       <Copy className="h-5 w-5 mr-2" />
-                      <span>Copiar enlace</span>
+                      Copiar enlace
                     </>
                   )}
                 </button>
@@ -159,7 +154,7 @@ ${event.description}
                   className="flex items-center px-4 py-2 bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
                 >
                   <Download className="h-5 w-5 mr-2" />
-                  <span>Descargar imagen</span>
+                  Descargar imagen
                 </button>
               </div>
             </div>
