@@ -27,6 +27,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
   const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
   // En la constante shareMessage, cambiar:
+// En ShareModal.tsx
 const shareMessage = `
 🎉 ¡Únete a este evento cultural!
 
@@ -38,9 +39,10 @@ const shareMessage = `
 
 ${event.description}
 
+${event.cost.type === 'free' ? '🎟️ Entrada gratuita' : `💵 Precio: $${event.cost.amount}`}
+
 🔗 Más información: ${eventUrl}
 `.trim();
-
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(eventUrl);
