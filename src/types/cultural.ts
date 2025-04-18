@@ -67,6 +67,21 @@ export interface ArtistBirthday {
   reminder?: ReminderConfig;
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  role: string;
+  discipline: ArtisticDiscipline;
+  email: string;
+  phone: string;
+  notes?: string;
+  image?: {
+    data: string;
+    type: string;
+  };
+  isFavorite: boolean;
+}
+
 export interface CulturalTask {
   id: string;
   title: string;

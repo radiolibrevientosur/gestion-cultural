@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CulturalProvider } from './context/CulturalContext';
-import { Calendar, Heart, UserCircle, Home, PlusCircle, Sun, Moon } from 'lucide-react';
+import { Calendar, Heart, Users, Home, PlusCircle, Sun, Moon } from 'lucide-react';
 import { EventoCulturalForm } from './components/cultural/EventoCulturalForm';
 import { BirthdayForm } from './components/cultural/BirthdayForm';
 import { TaskForm } from './components/cultural/TaskForm';
@@ -8,11 +8,12 @@ import { EventCard } from './components/cultural/EventCard';
 import { BirthdayCulturalCard } from './components/cultural/BirthdayCulturalCard';
 import { TaskCulturalKanban } from './components/cultural/TaskCulturalKanban';
 import { CalendarView } from './components/cultural/CalendarView';
+import { ContactList } from './components/cultural/ContactList';
 import { useTheme } from './hooks/useTheme';
 import { useCultural } from './context/CulturalContext';
 import type { CulturalEvent } from './types/cultural';
 
-type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'perfil' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea' | 'calendario';
+type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'contactos' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea' | 'calendario';
 
 function Dashboard() {
   const { state } = useCultural();
@@ -111,10 +112,12 @@ function Favorites() {
   const favoriteEvents = state.events.filter(event => event.isFavorite);
   const favoriteBirthdays = state.birthdays.filter(birthday => birthday.isFavorite);
   const favoriteTasks = state.tasks.filter(task => task.isFavorite);
+  const favoriteContacts = state.contacts?.filter(contact => contact.isFavorite) || [];
   
   return (
     <div className="p-4 space-y-8">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Favoritos</h2>
+      
       
       {/* Eventos Favoritos */}
       <section>
@@ -173,37 +176,24 @@ function Favorites() {
           <p className="text-gray-500 dark:text-gray-400">No hay tareas favoritas</p>
         )}
       </section>
-    </div>
-  );
-}
 
-function Profile() {
-  return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Perfil</h2>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre</label>
-            <input
-              type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-              placeholder="Tu nombre"
-            />
+      {/* Contactos Favoritos */}
+      <section>
+        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Contactos Favoritos</h3>
+        {favoriteContacts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {favoriteContacts.map(contact => (
+              <div key={contact.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white">{contact.name}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.role}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.discipline}</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Biografía</label>
-            <textarea
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-              placeholder="Cuéntanos sobre ti..."
-            />
-          </div>
-          <button className="w-full bg-cultural-escenicas text-white py-2 px-4 rounded-md hover:bg-cultural-escenicas/90 transition-colors">
-            Guardar Cambios
-          </button>
-        </div>
-      </div>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400">No hay contactos favoritos</p>
+        )}
+      </section>
     </div>
   );
 }
@@ -224,8 +214,8 @@ function App() {
         return <TaskForm onComplete={() => setActiveView('inicio')} />;
       case 'favoritos':
         return <Favorites />;
-      case 'perfil':
-        return <Profile />;
+      case 'contactos':
+        return <ContactList />;
       case 'calendario':
         return <CalendarView />;
       default:
@@ -299,13 +289,13 @@ function App() {
                 <span className="mt-1 text-xs">Calendario</span>
               </button>
               <button
-                onClick={() => setActiveView('perfil')}
+                onClick={() => setActiveView('contactos')}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  activeView === 'perfil' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
+                  activeView === 'contactos' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
-                <UserCircle className="h-6 w-6" />
-                <span className="mt-1 text-xs">Perfil</span>
+                <Users className="h-6 w-6" />
+                <span className="mt-1 text-xs">Contactos</span>
               </button>
             </div>
           </div>

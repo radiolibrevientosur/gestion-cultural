@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CulturalEvent, ArtistBirthday, CulturalTask } from '../types/cultural';
+import { CulturalEvent, ArtistBirthday, CulturalTask, Contact } from '../types/cultural';
 
 interface CulturalState {
   events: CulturalEvent[];
   birthdays: ArtistBirthday[];
   tasks: CulturalTask[];
+  contacts: Contact[];
 }
 
 type CulturalAction =
@@ -17,6 +18,9 @@ type CulturalAction =
   | { type: 'ADD_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: CulturalTask['status'] } }
+  | { type: 'ADD_CONTACT'; payload: Contact }
+  | { type: 'UPDATE_CONTACT'; payload: Contact }
+  | { type: 'DELETE_CONTACT'; payload: string }
   | { type: 'LOAD_STATE'; payload: CulturalState };
 
 const STORAGE_KEY = 'cultural_management_state';
@@ -25,6 +29,7 @@ const initialState: CulturalState = {
   events: [],
   birthdays: [],
   tasks: [],
+  contacts: []
 };
 
 const loadInitialState = (): CulturalState => {
@@ -45,7 +50,8 @@ const loadInitialState = (): CulturalState => {
         tasks: parsedState.tasks.map((task: any) => ({
           ...task,
           dueDate: new Date(task.dueDate)
-        }))
+        })),
+        contacts: parsedState.contacts || []
       };
     }
   } catch (error) {
@@ -111,6 +117,23 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
             ? { ...task, status: action.payload.status }
             : task
         ),
+      };
+      break;
+    case 'ADD_CONTACT':
+      newState = { ...state, contacts: [...state.contacts, action.payload] };
+      break;
+    case 'UPDATE_CONTACT':
+      newState = {
+        ...state,
+        contacts: state.contacts.map(contact =>
+          contact.id === action.payload.id ? action.payload : contact
+        )
+      };
+      break;
+    case 'DELETE_CONTACT':
+      newState = {
+        ...state,
+        contacts: state.contacts.filter(contact => contact.id !== action.payload)
       };
       break;
     case 'LOAD_STATE':
