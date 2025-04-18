@@ -26,12 +26,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
   const cardRef = useRef<HTMLDivElement>(null);
   const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
-  const shareMessage = `
+  // Modificar la constante shareMessage
+const shareMessage = `
+🎉 ¡Únete a este evento cultural!
+
 📢 ${event.title}
 📅 ${format(event.date, "d 'de' MMMM", { locale: es })} | 🕒 ${format(event.date, 'HH:mm')}
 📍 ${event.location}
-🔗 ${eventUrl}
-  `.trim();
+🎭 Tipo: ${event.eventType} - ${event.discipline}
+
+${event.description}
+
+🔗 Más información y reservas: ${eventUrl}
+`.trim();
 
   const handleCopyLink = async () => {
     try {
