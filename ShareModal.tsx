@@ -26,8 +26,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
   const cardRef = useRef<HTMLDivElement>(null);
   const eventUrl = `${window.location.origin}/evento/${event.id}`;
 
-  // Mensaje personalizado para compartir
-  const shareMessage = `
+  // En la constante shareMessage, cambiar:
+const shareMessage = `
 🎉 ¡Únete a este evento cultural!
 
 📢 ${event.title}
@@ -39,7 +39,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose }
 ${event.description}
 
 🔗 Más información: ${eventUrl}
-  `.trim();
+`.trim();
 
   const handleCopyLink = async () => {
     try {
