@@ -1,67 +1,142 @@
-import { DayPicker } from 'react-day-picker';
+import React from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { useCultural } from '../../context/CulturalContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useCultural } from '../context/CulturalContext';
-import 'react-day-picker/dist/style.css';
 
-export const CalendarView = () => {
-  const { state } = useCultural();
+export const CalendarView: React.FC = () => {
+  const { state, dispatch } = useCultural();
 
-  // Combinar todas las fechas relevantes
-  const eventDates = state.events.map(event => event.date);
-  const birthdayDates = state.birthdays.map(birthday => birthday.birthDate);
-  const taskDates = state.tasks.map(task => task.dueDate);
-  const allDates = [...eventDates, ...birthdayDates, ...taskDates];
+  // Combine all events, tasks, and birthdays into calendar events
+  const calendarEvents = [
+    // Cultural Events
+    ...state.events.map(event => ({
+      id: `event-${event.id}`,
+      title: event.title,
+      start: event.date,
+      backgroundColor: '#FF7F50', // cultural-escenicas
+      borderColor: '#FF7F50',
+      extendedProps: {
+        type: 'event',
+        description: event.description,
+        location: event.location
+      }
+    })),
+    
+    // Birthdays
+    ...state.birthdays.map(birthday => ({
+      id: `birthday-${birthday.id}`,
+      title: `🎂 ${birthday.name}`,
+      start: format(birthday.birthDate, 'yyyy-MM-dd'),
+      allDay: true,
+      backgroundColor: '#4B0082', // cultural-visuales
+      borderColor: '#4B0082',
+      extendedProps: {
+        type: 'birthday',
+        role: birthday.role,
+        discipline: birthday.discipline
+      }
+    })),
+    
+    // Tasks
+    ...state.tasks.map(task => ({
+      id: `task-${task.id}`,
+      title: `📋 ${task.title}`,
+      start: task.dueDate,
+      backgroundColor: '#1E90FF', // cultural-musicales
+      borderColor: '#1E90FF',
+      extendedProps: {
+        type: 'task',
+        status: task.status,
+        priority: task.priority
+      }
+    }))
+  ];
 
-  // Obtener elementos para una fecha específica
-  const getItemsForDate = (date: Date) => {
-    return {
-      events: state.events.filter(e => format(e.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')),
-      birthdays: state.birthdays.filter(b => format(b.birthDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')),
-      tasks: state.tasks.filter(t => format(t.dueDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'))
-    };
+  const handleEventClick = (info: any) => {
+    const { type, id } = info.event.extendedProps;
+    // Handle event click based on type
+    console.log('Clicked:', type, id);
+  };
+
+  const handleDateClick = (info: any) => {
+    const date = new Date(info.dateStr);
+    console.log('Date clicked:', date);
+  };
+
+  const handleEventDrop = (info: any) => {
+    const { type } = info.event.extendedProps;
+    const newDate = info.event.start;
+    const id = info.event.id.split('-')[1];
+
+    switch (type) {
+      case 'event':
+        dispatch({
+          type: 'UPDATE_EVENT',
+          payload: {
+            ...state.events.find(e => e.id === id)!,
+            date: newDate
+          }
+        });
+        break;
+      case 'task':
+        dispatch({
+          type: 'UPDATE_TASK',
+          payload: {
+            ...state.tasks.find(t => t.id === id)!,
+            dueDate: newDate
+          }
+        });
+        break;
+      // Birthdays shouldn't be draggable
+    }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Calendario de Actividades</h2>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <DayPicker
-          mode="single"
-          locale={es}
-          modifiers={{
-            hasItems: (date) => allDates.some(d => 
-              format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-            )
-          }}
-          modifiersStyles={{
-            hasItems: { 
-              backgroundColor: 'rgba(229, 231, 235, 0.5)',
-              border: '2px solid #3B82F6'
-            }
-          }}
-          onDayClick={(date) => {
-            const items = getItemsForDate(date);
-            console.log('Actividades para', format(date, 'PP', { locale: es }), items);
-          }}
-          className="dark:bg-gray-800 dark:text-white"
-          styles={{
-            head_cell: { color: '#6B7280' },
-            day: { color: '#1F2937' },
-            caption: { color: '#111827' },
-            nav_button: { backgroundColor: '#E5E7EB' }
-          }}
-        />
-      </div>
-
-      {/* Panel de Detalles */}
-      <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Detalles de la Fecha Seleccionada</h3>
-        <p className="text-gray-500 dark:text-gray-400">
-          Haz clic en cualquier fecha con actividades para ver los detalles aquí.
-        </p>
-      </div>
+    <div className="h-screen p-4">
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        editable={true}
+        selectable={true}
+        selectMirror={true}
+        dayMaxEvents={true}
+        weekends={true}
+        events={calendarEvents}
+        eventClick={handleEventClick}
+        dateClick={handleDateClick}
+        eventDrop={handleEventDrop}
+        locale="es"
+        buttonText={{
+          today: 'Hoy',
+          month: 'Mes',
+          week: 'Semana',
+          day: 'Día',
+          list: 'Lista'
+        }}
+        firstDay={1}
+        height="auto"
+        eventTimeFormat={{
+          hour: '2-digit',
+          minute: '2-digit',
+          meridiem: false,
+          hour12: false
+        }}
+        slotLabelFormat={{
+          hour: '2-digit',
+          minute: '2-digit',
+          omitZeroMinute: false,
+          meridiem: false
+        }}
+      />
     </div>
   );
 };

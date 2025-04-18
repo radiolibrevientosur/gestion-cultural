@@ -13,7 +13,9 @@ type CulturalAction =
   | { type: 'DELETE_EVENT'; payload: string }
   | { type: 'ADD_BIRTHDAY'; payload: ArtistBirthday }
   | { type: 'UPDATE_BIRTHDAY'; payload: ArtistBirthday }
+  | { type: 'DELETE_BIRTHDAY'; payload: string }
   | { type: 'ADD_TASK'; payload: CulturalTask }
+  | { type: 'UPDATE_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: CulturalTask['status'] } }
   | { type: 'LOAD_STATE'; payload: CulturalState };
 
@@ -25,13 +27,11 @@ const initialState: CulturalState = {
   tasks: [],
 };
 
-// Load state from localStorage
 const loadInitialState = (): CulturalState => {
   try {
     const savedState = localStorage.getItem(STORAGE_KEY);
     if (savedState) {
       const parsedState = JSON.parse(savedState);
-      // Convert string dates back to Date objects
       return {
         ...parsedState,
         events: parsedState.events.map((event: any) => ({
@@ -86,8 +86,22 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
         )
       };
       break;
+    case 'DELETE_BIRTHDAY':
+      newState = {
+        ...state,
+        birthdays: state.birthdays.filter(birthday => birthday.id !== action.payload)
+      };
+      break;
     case 'ADD_TASK':
       newState = { ...state, tasks: [...state.tasks, action.payload] };
+      break;
+    case 'UPDATE_TASK':
+      newState = {
+        ...state,
+        tasks: state.tasks.map(task =>
+          task.id === action.payload.id ? action.payload : task
+        )
+      };
       break;
     case 'UPDATE_TASK_STATUS':
       newState = {
@@ -106,7 +120,6 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
       return state;
   }
 
-  // Save to localStorage after each action
   localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
   return newState;
 };
@@ -119,7 +132,6 @@ const CulturalContext = createContext<{
 export const CulturalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(culturalReducer, initialState, loadInitialState);
 
-  // Load state from localStorage on mount
   useEffect(() => {
     const savedState = loadInitialState();
     if (savedState !== initialState) {

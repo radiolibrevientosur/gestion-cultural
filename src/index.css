@@ -1,20 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Calendario modo oscuro */
-.dark .rdp-day:hover:not(.rdp-day_disabled) {
-  @apply bg-blue-100/20;
-}
-
-.dark .rdp-head_cell {
-  @apply text-gray-300;
-}
-
-.dark .rdp-day {
-  @apply text-gray-100;
-}
-
-.dark .rdp-caption {
-  @apply text-white;
-}

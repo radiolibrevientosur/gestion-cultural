@@ -24,14 +24,18 @@ const birthdaySchema = z.object({
 });
 
 interface BirthdayFormProps {
+  birthday?: ArtistBirthday;
   onComplete?: () => void;
 }
 
-export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
+export const BirthdayForm: React.FC<BirthdayFormProps> = ({ birthday, onComplete }) => {
   const { dispatch } = useCultural();
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ArtistBirthday>({
     resolver: zodResolver(birthdaySchema),
-    defaultValues: {
+    defaultValues: birthday ? {
+      ...birthday,
+      birthDate: format(birthday.birthDate, 'yyyy-MM-dd')
+    } : {
       isFavorite: false
     }
   });
@@ -41,11 +45,12 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
   };
 
   const onSubmit = (data: any) => {
+    const action = birthday ? 'UPDATE_BIRTHDAY' : 'ADD_BIRTHDAY';
     dispatch({
-      type: 'ADD_BIRTHDAY',
+      type: action,
       payload: {
         ...data,
-        id: crypto.randomUUID(),
+        id: birthday?.id || crypto.randomUUID(),
         birthDate: new Date(data.birthDate)
       }
     });
@@ -55,7 +60,7 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
   return (
     <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
       <div className="px-6 py-4 bg-cultural-visuales text-white">
-        <h2 className="text-xl font-bold">Nuevo Cumpleaños</h2>
+        <h2 className="text-xl font-bold">{birthday ? 'Editar' : 'Nuevo'} Cumpleaños</h2>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -177,7 +182,7 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ onComplete }) => {
             type="submit"
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cultural-visuales hover:bg-cultural-visuales/90"
           >
-            Guardar
+            {birthday ? 'Guardar Cambios' : 'Guardar'}
           </button>
         </div>
       </form>

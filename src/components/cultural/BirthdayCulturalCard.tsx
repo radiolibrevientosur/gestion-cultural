@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Cake, Mail, Phone, Award, Heart, Share2 } from 'lucide-react';
+import { Cake, Mail, Phone, Award, Heart, Share2, Edit, Trash } from 'lucide-react';
 import type { ArtistBirthday } from '../../types/cultural';
 import { useCultural } from '../../context/CulturalContext';
 import { ShareModal } from './ShareModal';
+import { BirthdayForm } from './BirthdayForm';
 
 interface BirthdayCardProps {
   birthday: ArtistBirthday;
@@ -13,6 +14,7 @@ interface BirthdayCardProps {
 export const BirthdayCulturalCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
   const { dispatch } = useCultural();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isToday = (date: Date) => {
     const today = new Date();
@@ -26,6 +28,24 @@ export const BirthdayCulturalCard: React.FC<BirthdayCardProps> = ({ birthday }) 
       payload: { ...birthday, isFavorite: !birthday.isFavorite }
     });
   };
+
+  const handleDelete = () => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este cumpleaños?')) {
+      dispatch({
+        type: 'DELETE_BIRTHDAY',
+        payload: birthday.id
+      });
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <BirthdayForm
+        birthday={birthday}
+        onComplete={() => setIsEditing(false)}
+      />
+    );
+  }
 
   return (
     <>
@@ -50,6 +70,18 @@ export const BirthdayCulturalCard: React.FC<BirthdayCardProps> = ({ birthday }) 
                 className={`p-2 ${birthday.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
               >
                 <Heart className="h-5 w-5" fill={birthday.isFavorite ? "currentColor" : "none"} />
+              </button>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              >
+                <Edit className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              >
+                <Trash className="h-5 w-5" />
               </button>
               <Cake className={`h-6 w-6 ${
                 isToday(birthday.birthDate) ? 'text-cultural-visuales' : 'text-gray-400 dark:text-gray-500'
