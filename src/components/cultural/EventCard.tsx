@@ -34,7 +34,6 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-       // En EventCard.tsx - Cambiar imageBase64 por image?.data
 {event.image?.data && (
   <div className="relative h-48 w-full">
     <img
