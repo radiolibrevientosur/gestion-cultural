@@ -1,142 +1,170 @@
-import React from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { useCultural } from '../../context/CulturalContext';
+import React, { useState } from 'react';
+import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Plus, Calendar as CalendarIcon, Clock, MapPin, Users } from 'lucide-react';
+import { useCultural } from '../../context/CulturalContext';
+import { EventoCulturalForm } from './EventoCulturalForm';
+import 'react-day-picker/dist/style.css';
 
 export const CalendarView: React.FC = () => {
-  const { state, dispatch } = useCultural();
+  const { state } = useCultural();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [showEventDetails, setShowEventDetails] = useState<string | null>(null);
 
-  // Combine all events, tasks, and birthdays into calendar events
-  const calendarEvents = [
-    // Cultural Events
-    ...state.events.map(event => ({
-      id: `event-${event.id}`,
-      title: event.title,
-      start: event.date,
-      backgroundColor: '#FF7F50', // cultural-escenicas
-      borderColor: '#FF7F50',
-      extendedProps: {
-        type: 'event',
-        description: event.description,
-        location: event.location
-      }
-    })),
-    
-    // Birthdays
-    ...state.birthdays.map(birthday => ({
-      id: `birthday-${birthday.id}`,
-      title: `🎂 ${birthday.name}`,
-      start: format(birthday.birthDate, 'yyyy-MM-dd'),
-      allDay: true,
-      backgroundColor: '#4B0082', // cultural-visuales
-      borderColor: '#4B0082',
-      extendedProps: {
-        type: 'birthday',
-        role: birthday.role,
-        discipline: birthday.discipline
-      }
-    })),
-    
-    // Tasks
-    ...state.tasks.map(task => ({
-      id: `task-${task.id}`,
-      title: `📋 ${task.title}`,
-      start: task.dueDate,
-      backgroundColor: '#1E90FF', // cultural-musicales
-      borderColor: '#1E90FF',
-      extendedProps: {
-        type: 'task',
-        status: task.status,
-        priority: task.priority
-      }
-    }))
-  ];
-
-  const handleEventClick = (info: any) => {
-    const { type, id } = info.event.extendedProps;
-    // Handle event click based on type
-    console.log('Clicked:', type, id);
+  const getEventsForDate = (date: Date) => {
+    return state.events.filter(event => 
+      format(event.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    );
   };
 
-  const handleDateClick = (info: any) => {
-    const date = new Date(info.dateStr);
-    console.log('Date clicked:', date);
+  const getBirthdaysForDate = (date: Date) => {
+    return state.birthdays.filter(birthday => 
+      format(birthday.birthDate, 'MM-dd') === format(date, 'MM-dd')
+    );
   };
 
-  const handleEventDrop = (info: any) => {
-    const { type } = info.event.extendedProps;
-    const newDate = info.event.start;
-    const id = info.event.id.split('-')[1];
-
-    switch (type) {
-      case 'event':
-        dispatch({
-          type: 'UPDATE_EVENT',
-          payload: {
-            ...state.events.find(e => e.id === id)!,
-            date: newDate
-          }
-        });
-        break;
-      case 'task':
-        dispatch({
-          type: 'UPDATE_TASK',
-          payload: {
-            ...state.tasks.find(t => t.id === id)!,
-            dueDate: newDate
-          }
-        });
-        break;
-      // Birthdays shouldn't be draggable
-    }
+  const getTasksForDate = (date: Date) => {
+    return state.tasks.filter(task => 
+      format(task.dueDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    );
   };
+
+  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
+  const selectedDateBirthdays = selectedDate ? getBirthdaysForDate(selectedDate) : [];
+  const selectedDateTasks = selectedDate ? getTasksForDate(selectedDate) : [];
+
+  if (isCreatingEvent) {
+    return (
+      <EventoCulturalForm
+        onComplete={() => setIsCreatingEvent(false)}
+        initialDate={selectedDate}
+      />
+    );
+  }
 
   return (
-    <div className="h-screen p-4">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        editable={true}
-        selectable={true}
-        selectMirror={true}
-        dayMaxEvents={true}
-        weekends={true}
-        events={calendarEvents}
-        eventClick={handleEventClick}
-        dateClick={handleDateClick}
-        eventDrop={handleEventDrop}
-        locale="es"
-        buttonText={{
-          today: 'Hoy',
-          month: 'Mes',
-          week: 'Semana',
-          day: 'Día',
-          list: 'Lista'
-        }}
-        firstDay={1}
-        height="auto"
-        eventTimeFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          meridiem: false,
-          hour12: false
-        }}
-        slotLabelFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          omitZeroMinute: false,
-          meridiem: false
-        }}
-      />
+    <div className="max-w-7xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Calendario Cultural</h2>
+        <button
+          onClick={() => setIsCreatingEvent(true)}
+          className="flex items-center px-4 py-2 bg-cultural-escenicas text-white rounded-lg hover:bg-cultural-escenicas/90 transition-colors"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Nuevo Evento
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            locale={es}
+            modifiers={{
+              hasEvents: (date) => 
+                getEventsForDate(date).length > 0 ||
+                getBirthdaysForDate(date).length > 0 ||
+                getTasksForDate(date).length > 0
+            }}
+            modifiersStyles={{
+              hasEvents: { 
+                backgroundColor: '#FF7F50',
+                color: 'white'
+              }
+            }}
+            styles={{
+              caption: { color: 'inherit' },
+              head_cell: { color: 'inherit' },
+              cell: { color: 'inherit' },
+              day: { color: 'inherit' }
+            }}
+            className="rdp-custom"
+          />
+        </div>
+
+        <div className="space-y-6">
+          {selectedDate && (
+            <>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
+                </h3>
+
+                {selectedDateEvents.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Eventos</h4>
+                    <div className="space-y-4">
+                      {selectedDateEvents.map(event => (
+                        <div
+                          key={event.id}
+                          className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          onClick={() => setShowEventDetails(event.id)}
+                        >
+                          <h5 className="font-medium text-gray-900 dark:text-white">{event.title}</h5>
+                          <div className="mt-2 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-2" />
+                              <span>{format(event.date, 'HH:mm')}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-2" />
+                              <span>{event.location}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-2" />
+                              <span>{event.targetAudience}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDateBirthdays.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Cumpleaños</h4>
+                    <div className="space-y-2">
+                      {selectedDateBirthdays.map(birthday => (
+                        <div key={birthday.id} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                          <p className="text-gray-900 dark:text-white">🎂 {birthday.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{birthday.role}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDateTasks.length > 0 && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Tareas</h4>
+                    <div className="space-y-2">
+                      {selectedDateTasks.map(task => (
+                        <div key={task.id} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                          <p className="text-gray-900 dark:text-white">📋 {task.title}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{task.status}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDateEvents.length === 0 && 
+                 selectedDateBirthdays.length === 0 && 
+                 selectedDateTasks.length === 0 && (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                    No hay eventos programados para este día
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
