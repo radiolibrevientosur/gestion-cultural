@@ -58,32 +58,34 @@ export const CalendarView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <DayPicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            locale={es}
-            modifiers={{
-              hasEvents: (date) => 
-                getEventsForDate(date).length > 0 ||
-                getBirthdaysForDate(date).length > 0 ||
-                getTasksForDate(date).length > 0
-            }}
-            modifiersStyles={{
-              hasEvents: { 
-                backgroundColor: '#FF7F50',
-                color: 'white'
-              }
-            }}
-            styles={{
-              caption: { color: 'inherit' },
-              head_cell: { color: 'inherit' },
-              cell: { color: 'inherit' },
-              day: { color: 'inherit' }
-            }}
-            className="rdp-custom"
-          />
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md overflow-x-auto">
+          <div className="min-w-[280px] w-full flex justify-center">
+            <DayPicker
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              locale={es}
+              modifiers={{
+                hasEvents: (date) => 
+                  getEventsForDate(date).length > 0 ||
+                  getBirthdaysForDate(date).length > 0 ||
+                  getTasksForDate(date).length > 0
+              }}
+              modifiersStyles={{
+                hasEvents: { 
+                  backgroundColor: '#FF7F50',
+                  color: 'white'
+                }
+              }}
+              styles={{
+                caption: { color: 'inherit' },
+                head_cell: { color: 'inherit' },
+                cell: { color: 'inherit' },
+                day: { color: 'inherit' }
+              }}
+              className="rdp-custom max-w-full"
+            />
+          </div>
         </div>
 
         <div className="space-y-6">
