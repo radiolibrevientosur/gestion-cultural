@@ -21,6 +21,7 @@ type CulturalAction =
   | { type: 'ADD_CONTACT'; payload: Contact }
   | { type: 'UPDATE_CONTACT'; payload: Contact }
   | { type: 'DELETE_CONTACT'; payload: string }
+  | { type: 'ADD_MULTIPLE_CONTACTS'; payload: Contact[] }
   | { type: 'LOAD_STATE'; payload: CulturalState };
 
 const STORAGE_KEY = 'cultural_management_state';
@@ -51,7 +52,13 @@ const loadInitialState = (): CulturalState => {
           ...task,
           dueDate: new Date(task.dueDate)
         })),
-        contacts: parsedState.contacts || []
+        contacts: parsedState.contacts?.map((contact: any) => ({
+          ...contact,
+          // Aseguramos los campos opcionales de redes sociales
+          whatsapp: contact.whatsapp || undefined,
+          instagram: contact.instagram || undefined,
+          facebook: contact.facebook || undefined
+        })) || []
       };
     }
   } catch (error) {
@@ -134,6 +141,22 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
       newState = {
         ...state,
         contacts: state.contacts.filter(contact => contact.id !== action.payload)
+      };
+      break;
+    case 'ADD_MULTIPLE_CONTACTS':
+      newState = {
+        ...state,
+        contacts: [
+          ...state.contacts,
+          ...action.payload.map(contact => ({
+            ...contact,
+            id: contact.id || crypto.randomUUID(),
+            // Campos opcionales con valores por defecto
+            whatsapp: contact.whatsapp || undefined,
+            instagram: contact.instagram || undefined,
+            facebook: contact.facebook || undefined
+          }))
+        ]
       };
       break;
     case 'LOAD_STATE':
