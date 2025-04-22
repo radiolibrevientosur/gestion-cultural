@@ -12,6 +12,9 @@ const contactSchema = z.object({
   discipline: z.enum(['Teatro', 'Danza', 'Artes Visuales', 'Música', 'Literatura'] as const),
   email: z.string().email('Email inválido'),
   phone: z.string().min(6, 'El teléfono es requerido'),
+   whatsapp: z.string().optional(),
+  instagram: z.string().optional(),
+  facebook: z.string().optional(),
   notes: z.string().optional(),
   image: z.object({
     data: z.string(),
@@ -146,7 +149,41 @@ export const ContactForm: React.FC<ContactFormProps> = ({ contact, onComplete })
             )}
           </div>
         </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+    WhatsApp
+  </label>
+  <input
+    type="text"
+    {...register('whatsapp')}
+    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+    placeholder="Ej: +541112345678"
+  />
+</div>
 
+<div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+    Instagram
+  </label>
+  <input
+    type="text"
+    {...register('instagram')}
+    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+    placeholder="@usuario"
+  />
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+    Facebook
+  </label>
+  <input
+    type="text"
+    {...register('facebook')}
+    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+    placeholder="facebook.com/usuario"
+  />
+</div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Notas

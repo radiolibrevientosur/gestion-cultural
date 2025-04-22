@@ -129,4 +129,7 @@ export interface UserProfile {
   email: string;
   bio?: string;
   theme: ThemeConfig;
+  whatsapp?: string;
+instagram?: string;
+facebook?: string;
 }
