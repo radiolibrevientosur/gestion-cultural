@@ -1,6 +1,23 @@
-export type ArtisticDiscipline = 'Teatro' | 'Danza' | 'Artes Visuales' | 'Música' | 'Literatura';
+export type Category =
+  | 'CINE Y MEDIOS AUDIOVISUALES'
+  | 'ARTES VISUALES'
+  | 'ARTES ESCÉNICAS Y MUSICALES'
+  | 'PROMOCIÓN DEL LIBRO Y LA LECTURA'
+  | 'PATRIMONIO CULTURAL'
+  | 'ECONOMÍA CULTURAL'
+  | 'OTROS';
 
-export type EventType = 'Taller' | 'Espectáculo' | 'Exposición' | 'Concierto' | 'Conferencia';
+export type EventType = {
+  'CINE Y MEDIOS AUDIOVISUALES': ['cine foro', 'proyección de cine', 'radio', 'realización audiovisual'];
+  'ARTES VISUALES': ['dibujo y pintura', 'escultura', 'fotografía', 'constructivismo', 'arte conceptual', 'muralismo'];
+  'ARTES ESCÉNICAS Y MUSICALES': ['teatro', 'danza', 'música', 'circo'];
+  'PROMOCIÓN DEL LIBRO Y LA LECTURA': ['creación y expresividad iteraria', 'promoción de lectura', 'club de libros'];
+  'PATRIMONIO CULTURAL': ['historia local', 'historia general', 'costumbres y tradiciones', 'cultura popular', 'identidad cultural'];
+  'ECONOMÍA CULTURAL': ['industrias culturales', 'proyectos culturales', 'portafolios culturales (emprendimientos)', 'finanzas culturales'];
+  'OTROS': [];
+}[Category];
+
+export type ArtisticDiscipline = 'Teatro' | 'Danza' | 'Artes Visuales' | 'Música' | 'Literatura';
 
 export type EventCost = {
   type: 'free' | 'paid';
@@ -26,6 +43,7 @@ export interface CulturalEvent {
   id: string;
   title: string;
   description: string;
+  category: Category;
   eventType: EventType;
   discipline: ArtisticDiscipline;
   date: Date;

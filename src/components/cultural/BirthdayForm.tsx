@@ -35,7 +35,9 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ birthday, onComplete
     resolver: zodResolver(birthdaySchema),
     defaultValues: birthday ? {
       ...birthday,
-      birthDate: format(birthday.birthDate, 'yyyy-MM-dd')
+      birthDate: format(birthday.birthDate, 'yyyy-MM-dd'),
+      image: birthday.image,
+      isFavorite: birthday.isFavorite
     } : {
       isFavorite: false
     }
@@ -59,158 +61,134 @@ export const BirthdayForm: React.FC<BirthdayFormProps> = ({ birthday, onComplete
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-        <div className="px-6 py-4 bg-cultural-visuales text-white">
-          <h2 className="text-xl font-bold">{birthday ? 'Editar' : 'Nuevo'} Cumpleaños</h2>
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+      <div className="px-6 py-4 bg-cultural-visuales text-white">
+        <h2 className="text-xl font-bold">{birthday ? 'Editar' : 'Nuevo'} Cumpleaños</h2>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-800 mb-2">
+            Imagen
+          </label>
+          <ImageUpload
+            value={watch('image')}
+            onChange={handleImageChange}
+            className="w-full"
+          />
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Columna izquierda */}
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  {...register('name')}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Trayectoria
-                </label>
-                <textarea
-                  {...register('trajectory')}
-                  rows={4}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                />
-                {errors.trajectory && (
-                  <p className="mt-1 text-sm text-red-600">{errors.trajectory.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Fecha de Nacimiento
-                  </label>
-                  <input
-                    type="date"
-                    {...register('birthDate')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                  />
-                  {errors.birthDate && (
-                    <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Disciplina Artística
-                  </label>
-                  <select
-                    {...register('discipline')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                  >
-                    <option value="">Seleccionar disciplina...</option>
-                    <option value="Teatro">Teatro</option>
-                    <option value="Danza">Danza</option>
-                    <option value="Artes Visuales">Artes Visuales</option>
-                    <option value="Música">Música</option>
-                    <option value="Literatura">Literatura</option>
-                  </select>
-                  {errors.discipline && (
-                    <p className="mt-1 text-sm text-red-600">{errors.discipline.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    {...register('contactInfo.email')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                  />
-                  {errors.contactInfo?.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.contactInfo.email.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Teléfono
-                  </label>
-                  <input
-                    type="tel"
-                    {...register('contactInfo.phone')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                  />
-                  {errors.contactInfo?.phone && (
-                    <p className="mt-1 text-sm text-red-600">{errors.contactInfo.phone.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Rol
-                </label>
-                <input
-                  type="text"
-                  {...register('role')}
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
-                  placeholder="Ej: Actor, Director, Músico..."
-                />
-                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Columna derecha */}
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  Imagen
-                </label>
-                <ImageUpload
-                  value={watch('image')}
-                  onChange={handleImageChange}
-                  className="w-full"
-                />
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Nombre</label>
+            <input
+              type="text"
+              {...register('name')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            )}
           </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => onComplete?.()}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cultural-visuales hover:bg-cultural-visuales/90"
-            >
-              {birthday ? 'Guardar Cambios' : 'Guardar'}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Fecha de Nacimiento</label>
+            <input
+              type="date"
+              {...register('birthDate')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            />
+            {errors.birthDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
+            )}
           </div>
-        </form>
-      </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Rol</label>
+            <input
+              type="text"
+              {...register('role')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+              placeholder="Ej: Actor, Director, Músico..."
+            />
+            {errors.role && (
+              <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Disciplina Artística</label>
+            <select
+              {...register('discipline')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            >
+              <option value="">Seleccionar disciplina...</option>
+              <option value="Teatro">Teatro</option>
+              <option value="Danza">Danza</option>
+              <option value="Artes Visuales">Artes Visuales</option>
+              <option value="Música">Música</option>
+              <option value="Literatura">Literatura</option>
+            </select>
+            {errors.discipline && (
+              <p className="mt-1 text-sm text-red-600">{errors.discipline.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+            <input
+              type="email"
+              {...register('contactInfo.email')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            />
+            {errors.contactInfo?.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.contactInfo.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Teléfono</label>
+            <input
+              type="tel"
+              {...register('contactInfo.phone')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+            />
+            {errors.contactInfo?.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.contactInfo.phone.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Trayectoria</label>
+          <textarea
+            {...register('trajectory')}
+            rows={4}
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-visuales focus:ring focus:ring-cultural-visuales focus:ring-opacity-50"
+          />
+          {errors.trajectory && (
+            <p className="mt-1 text-sm text-red-600">{errors.trajectory.message}</p>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => onComplete?.()}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cultural-visuales hover:bg-cultural-visuales/90"
+          >
+            {birthday ? 'Guardar Cambios' : 'Guardar'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

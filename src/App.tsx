@@ -9,6 +9,7 @@ import { BirthdayCulturalCard } from './components/cultural/BirthdayCulturalCard
 import { TaskCulturalKanban } from './components/cultural/TaskCulturalKanban';
 import { CalendarView } from './components/cultural/CalendarView';
 import { ContactList } from './components/cultural/ContactList';
+import { OfflineIndicator } from './components/ui/OfflineIndicator';
 import { useTheme } from './hooks/useTheme';
 import { useCultural } from './context/CulturalContext';
 import type { CulturalEvent } from './types/cultural';
@@ -226,6 +227,7 @@ function App() {
   return (
     <CulturalProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <OfflineIndicator />
         <header className="bg-white dark:bg-gray-800 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
