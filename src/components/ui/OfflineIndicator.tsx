@@ -19,12 +19,12 @@ export const OfflineIndicator: React.FC = () => {
         {isOnline ? (
           <>
             <Wifi className="h-5 w-5" />
-            <span>Conectado</span>
+            
           </>
         ) : (
           <>
             <WifiOff className="h-5 w-5" />
-            <span>Modo sin conexión</span>
+          
           </>
         )}
 
