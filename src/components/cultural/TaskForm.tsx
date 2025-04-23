@@ -21,14 +21,15 @@ const taskSchema = z.object({
 });
 
 interface TaskFormProps {
+  task?: CulturalTask;
   onComplete?: () => void;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
+export const TaskForm: React.FC<TaskFormProps> = ({ task, onComplete }) => {
   const { dispatch } = useCultural();
   const { register, handleSubmit, formState: { errors } } = useForm<CulturalTask>({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
+    defaultValues: task || {
       status: 'pending',
       checklist: [],
       isFavorite: false
@@ -36,11 +37,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
   });
 
   const onSubmit = (data: any) => {
+    const action = task ? 'UPDATE_TASK' : 'ADD_TASK';
     dispatch({
-      type: 'ADD_TASK',
+      type: action,
       payload: {
         ...data,
-        id: crypto.randomUUID(),
+        id: task?.id || crypto.randomUUID(),
         dueDate: new Date(data.dueDate)
       }
     });
@@ -48,19 +50,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
       <div className="px-6 py-4 bg-cultural-musicales text-white">
-        <h2 className="text-xl font-bold">Nueva Tarea</h2>
+        <h2 className="text-xl font-bold">{task ? 'Editar' : 'Nueva'} Tarea</h2>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Título</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Título</label>
             <input
               type="text"
               {...register('title')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
             />
             {errors.title && (
               <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
@@ -68,11 +70,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Fecha Límite</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Fecha Límite</label>
             <input
               type="datetime-local"
               {...register('dueDate')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
             />
             {errors.dueDate && (
               <p className="mt-1 text-sm text-red-600">{errors.dueDate.message}</p>
@@ -80,10 +82,22 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Prioridad</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Estado</label>
+            <select
+              {...register('status')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+            >
+              <option value="pending">Pendiente</option>
+              <option value="in-progress">En Progreso</option>
+              <option value="completed">Completada</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Prioridad</label>
             <select
               {...register('priority')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
             >
               <option value="">Seleccionar prioridad...</option>
               <option value="low">Baja</option>
@@ -96,11 +110,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Asignado a</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Asignado a</label>
             <input
               type="text"
               {...register('assignedTo')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
             />
             {errors.assignedTo && (
               <p className="mt-1 text-sm text-red-600">{errors.assignedTo.message}</p>
@@ -109,11 +123,11 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Descripción</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Descripción</label>
           <textarea
             {...register('description')}
             rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-musicales focus:ring focus:ring-cultural-musicales focus:ring-opacity-50"
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
@@ -124,7 +138,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
           <button
             type="button"
             onClick={() => onComplete?.()}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Cancelar
           </button>
@@ -132,7 +146,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onComplete }) => {
             type="submit"
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cultural-musicales hover:bg-cultural-musicales/90"
           >
-            Crear Tarea
+            {task ? 'Guardar Cambios' : 'Crear Tarea'}
           </button>
         </div>
       </form>

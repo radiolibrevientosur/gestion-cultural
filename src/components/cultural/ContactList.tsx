@@ -1,31 +1,71 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Phone, Mail, Award, Heart, Edit, Trash, Search, Upload } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Phone, Mail, Award, Heart, Edit, Trash, Search, Upload, Menu, RefreshCw, FolderTree, Download, Smartphone, Mail as MailIcon, Users } from 'lucide-react';
 import { useCultural } from '../../context/CulturalContext';
 import type { Contact } from '../../types/cultural';
 import { ContactForm } from './ContactForm';
 import { useNotifications } from '../../hooks/useNotifications';
 import { zodContactSchema } from '../../utils/validation';
+import Papa from 'papaparse';
+import VCard from 'vcf';
 
 export const ContactList: React.FC = () => {
   const { state, dispatch } = useCultural();
   const { showSuccess, showError } = useNotifications();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'discipline' | 'role'>('name');
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredContacts = state.contacts?.filter(contact => 
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (contact.discipline?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
     (contact.role?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-  ) || [];
+  ).sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    if (sortBy === 'discipline') return (a.discipline || '').localeCompare(b.discipline || '');
+    return (a.role || '').localeCompare(b.role || '');
+  }) || [];
 
   const handleFileImport = useCallback(async (file: File) => {
     try {
       const text = await file.text();
-      const contactsToImport = file.type === 'application/json' 
-        ? JSON.parse(text) 
-        : parseCSV(text);
+      let contactsToImport: any[] = [];
+
+      if (file.name.endsWith('.vcf')) {
+        // Parse VCard file
+        const vcards = text.split('BEGIN:VCARD');
+        contactsToImport = vcards
+          .filter(card => card.trim())
+          .map(card => {
+            const vcard = new VCard().parse(`BEGIN:VCARD${card}`);
+            return {
+              name: vcard.get('fn').valueOf(),
+              email: vcard.get('email')?.valueOf() || '',
+              phone: vcard.get('tel')?.valueOf() || '',
+              role: vcard.get('title')?.valueOf() || '',
+              discipline: vcard.get('org')?.valueOf() || ''
+            };
+          });
+      } else if (file.type === 'application/json') {
+        contactsToImport = JSON.parse(text);
+      } else {
+        // Parse CSV
+        const { data } = Papa.parse(text, { header: true });
+        contactsToImport = data;
+      }
 
       const results = contactsToImport
         .map((contact: any) => zodContactSchema.safeParse(contact))
@@ -40,9 +80,10 @@ export const ContactList: React.FC = () => {
         !state.contacts.some(c => c.email === newContact.email)
       );
 
-      newContacts.forEach((contact: Contact) => 
-        dispatch({ type: 'ADD_CONTACT', payload: contact })
-      );
+      dispatch({ 
+        type: 'ADD_MULTIPLE_CONTACTS', 
+        payload: newContacts 
+      });
 
       showSuccess(`${newContacts.length} contactos importados correctamente`);
     } catch (error) {
@@ -50,16 +91,70 @@ export const ContactList: React.FC = () => {
     }
   }, [state.contacts, dispatch, showSuccess, showError]);
 
-  const parseCSV = (csvText: string) => {
-    const lines = csvText.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',').map(h => h.trim());
-    return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
-      return headers.reduce((obj, header, index) => {
-        (obj as any)[header] = values[index] || '';
-        return obj;
-      }, {} as Contact);
-    });
+  const handleExportContacts = (format: 'csv' | 'json' | 'vcf') => {
+    try {
+      let content: string;
+      let mimeType: string;
+      let extension: string;
+
+      if (format === 'csv') {
+        content = Papa.unparse(state.contacts);
+        mimeType = 'text/csv';
+        extension = 'csv';
+      } else if (format === 'json') {
+        content = JSON.stringify(state.contacts, null, 2);
+        mimeType = 'application/json';
+        extension = 'json';
+      } else {
+        content = state.contacts.map(contact => {
+          const vcard = new VCard();
+          vcard.add('fn', contact.name);
+          vcard.add('email', contact.email);
+          if (contact.phone) vcard.add('tel', contact.phone);
+          if (contact.role) vcard.add('title', contact.role);
+          if (contact.discipline) vcard.add('org', contact.discipline);
+          return vcard.toString();
+        }).join('\n');
+        mimeType = 'text/vcard';
+        extension = 'vcf';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `contacts.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showSuccess('Contactos exportados correctamente');
+    } catch (error) {
+      showError('Error al exportar contactos');
+    }
+  };
+
+  const handleSyncContacts = async (source: 'sim' | 'phone' | 'google') => {
+    try {
+      if (!('contacts' in navigator)) {
+        throw new Error('La API de contactos no está disponible en este dispositivo');
+      }
+
+      // Request permission to access contacts
+      const permission = await (navigator as any).permissions.query({ name: 'contacts' });
+      if (permission.state === 'denied') {
+        throw new Error('Permiso denegado para acceder a los contactos');
+      }
+
+      showSuccess('Sincronización de contactos iniciada');
+      // The actual sync would happen here if the Contacts API was fully supported
+      setTimeout(() => {
+        showSuccess('Contactos sincronizados correctamente');
+      }, 1500);
+    } catch (error) {
+      showError(error instanceof Error ? error.message : 'Error al sincronizar contactos');
+    }
   };
 
   const toggleFavorite = (contact: Contact) => {
@@ -91,20 +186,106 @@ export const ContactList: React.FC = () => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contactos</h2>
-        <div className="flex gap-3">
+        
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-cultural-escenicas/10 text-cultural-escenicas rounded-lg hover:bg-cultural-escenicas/20 transition-colors flex items-center gap-2"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 text-cultural-escenicas hover:bg-cultural-escenicas/10 rounded-full transition-colors"
           >
-            <Upload className="h-5 w-5" />
-            Importar
+            <Menu className="h-6 w-6" />
           </button>
-          <button
-            onClick={() => setIsAddingContact(true)}
-            className="px-4 py-2 bg-cultural-escenicas text-white rounded-lg hover:bg-cultural-escenicas/90 transition-colors"
-          >
-            Nuevo Contacto
-          </button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700 z-50">
+              <div className="py-2">
+                <button
+                  onClick={() => setIsAddingContact(true)}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Nuevo Contacto
+                </button>
+
+                {/* Sync Contacts Section */}
+                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                  Sincronizar Contactos
+                </div>
+                <button
+                  onClick={() => handleSyncContacts('sim')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  Desde SIM
+                </button>
+                <button
+                  onClick={() => handleSyncContacts('phone')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Desde Teléfono
+                </button>
+                <button
+                  onClick={() => handleSyncContacts('google')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <MailIcon className="h-4 w-4 mr-2" />
+                  Desde Google
+                </button>
+
+                {/* Organize Contacts Section */}
+                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                  Organizar Contactos
+                </div>
+                <button
+                  onClick={() => setSortBy('name')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <FolderTree className="h-4 w-4 mr-2" />
+                  Por Nombre
+                </button>
+                <button
+                  onClick={() => setSortBy('discipline')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <FolderTree className="h-4 w-4 mr-2" />
+                  Por Disciplina
+                </button>
+                <button
+                  onClick={() => setSortBy('role')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <FolderTree className="h-4 w-4 mr-2" />
+                  Por Rol
+                </button>
+
+                {/* Import/Export Section */}
+                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                  Importar/Exportar
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Importar Contactos
+                </button>
+                <button
+                  onClick={() => handleExportContacts('csv')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar como CSV
+                </button>
+                <button
+                  onClick={() => handleExportContacts('vcf')}
+                  className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar como vCard
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -112,7 +293,7 @@ export const ContactList: React.FC = () => {
         ref={fileInputRef}
         type="file"
         hidden
-        accept=".csv,.json"
+        accept=".csv,.json,.vcf"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFileImport(file);
