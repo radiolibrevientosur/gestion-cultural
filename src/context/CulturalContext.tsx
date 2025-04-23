@@ -18,6 +18,7 @@ type CulturalAction =
   | { type: 'ADD_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK'; payload: CulturalTask }
   | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: CulturalTask['status'] } }
+  | { type: 'DELETE_TASK'; payload: string } 
   | { type: 'ADD_CONTACT'; payload: Contact }
   | { type: 'UPDATE_CONTACT'; payload: Contact }
   | { type: 'DELETE_CONTACT'; payload: string }
@@ -124,6 +125,12 @@ const culturalReducer = (state: CulturalState, action: CulturalAction): Cultural
             ? { ...task, status: action.payload.status }
             : task
         ),
+      };
+      break; 
+    case 'DELETE_TASK': // <-- Añadir este caso
+      newState = {
+        ...state,
+        tasks: state.tasks.filter(task => task.id !== action.payload)
       };
       break;
     case 'ADD_CONTACT':
