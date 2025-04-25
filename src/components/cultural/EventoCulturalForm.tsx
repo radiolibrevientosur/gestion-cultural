@@ -21,7 +21,7 @@ const EVENT_TYPES: Record<Category, string[]> = {
   'CINE Y MEDIOS AUDIOVISUALES': ['cine foro', 'proyección de cine', 'radio', 'realización audiovisual'],
   'ARTES VISUALES': ['dibujo y pintura', 'escultura', 'fotografía', 'constructivismo', 'arte conceptual', 'muralismo'],
   'ARTES ESCÉNICAS Y MUSICALES': ['teatro', 'danza', 'música', 'circo'],
-  'PROMOCIÓN DEL LIBRO Y LA LECTURA': ['creación y expresividad iteraria', 'promoción de lectura', 'club de libros'],
+  'PROMOCIÓN DEL LIBRO Y LA LECTURA': ['creación y expresividad literaria', 'promoción de lectura', 'club de libros'],
   'PATRIMONIO CULTURAL': ['historia local', 'historia general', 'costumbres y tradiciones', 'cultura popular', 'identidad cultural'],
   'ECONOMÍA CULTURAL': ['industrias culturales', 'proyectos culturales', 'portafolios culturales (emprendimientos)', 'finanzas culturales'],
   'OTROS': []
@@ -38,8 +38,10 @@ const eventSchema = z.object({
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
   description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
   category: z.enum(CATEGORIES),
-  eventType: z.string().min(1, 'Selecciona un tipo de evento'),
-  discipline: z.enum(['Teatro', 'Danza', 'Artes Visuales', 'Música', 'Literatura'] as const),
+  eventType: z.string().refine((val) => val.length > 0, {
+    message: 'Selecciona un tipo de evento'
+  }),
+  discipline: z.enum(['Teatro', 'Danza', 'Artes Visuales', 'Música', 'Literatura']),
   date: z.string().min(1, 'La fecha es requerida'),
   location: z.string().min(3, 'La ubicación es requerida'),
   targetAudience: z.enum(['Infantil', 'Adultos', 'Todos']),
@@ -52,12 +54,12 @@ const eventSchema = z.object({
     phone: z.string().min(6, 'El teléfono es requerido'),
     socialMedia: z.string().optional()
   }),
-  technicalRequirements: z.array(z.string()),
+  technicalRequirements: z.array(z.string()).default([]),
   image: z.object({
     data: z.string(),
     type: z.string()
   }).optional(),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).default([]),
   isFavorite: z.boolean().default(false),
   recurrence: recurrenceSchema.default({ type: 'none' })
 });
@@ -77,7 +79,8 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
       technicalRequirements: [],
       tags: [],
       isFavorite: false,
-      recurrence: { type: 'none' }
+      recurrence: { type: 'none' },
+      discipline: 'Teatro'
     }
   });
 
@@ -89,24 +92,28 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
     const newCategory = e.target.value as Category;
     setSelectedCategory(newCategory);
     setValue('category', newCategory);
-    setValue('eventType', ''); // Reset event type when category changes
+    setValue('eventType', '');
   };
 
   const onSubmit = async (data: CulturalEvent) => {
+    console.log('Datos del formulario:', data);
     try {
       const action = event ? 'UPDATE_EVENT' : 'ADD_EVENT';
+      const payload = {
+        ...data,
+        id: event?.id || crypto.randomUUID(),
+        date: new Date(data.date),
+        imageBase64: data.image?.data || null
+      };
+      
+      console.log('Dispatching:', payload);
       dispatch({
         type: action,
-        payload: {
-          ...data,
-          id: event?.id || crypto.randomUUID(),
-          date: new Date(data.date),
-          imageBase64: data.image ? data.image.data : null
-        }
+        payload
       });
       onComplete?.();
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error('Error detallado:', error);
       alert('Error al guardar el evento. Por favor, intente nuevamente.');
     }
   };
@@ -216,6 +223,27 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
               <p className="mt-1 text-sm text-red-600">{errors.eventType.message}</p>
             )}
           </div>
+        </div>
+
+        {/* Disciplina */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Disciplina
+          </label>
+          <select
+            {...register('discipline')}
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+          >
+            <option value="">Seleccionar disciplina...</option>
+            <option value="Teatro">Teatro</option>
+            <option value="Danza">Danza</option>
+            <option value="Artes Visuales">Artes Visuales</option>
+            <option value="Música">Música</option>
+            <option value="Literatura">Literatura</option>
+          </select>
+          {errors.discipline && (
+            <p className="mt-1 text-sm text-red-600">{errors.discipline.message}</p>
+          )}
         </div>
 
         {/* Fecha y Recurrencia */}
