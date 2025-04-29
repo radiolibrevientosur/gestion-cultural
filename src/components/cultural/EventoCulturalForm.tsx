@@ -41,7 +41,6 @@ const eventSchema = z.object({
   eventType: z.string().refine((val) => val.length > 0, {
     message: 'Selecciona un tipo de evento'
   }),
-  discipline: z.enum(['Teatro', 'Danza', 'Artes Visuales', 'Música', 'Literatura']),
   date: z.string().min(1, 'La fecha es requerida'),
   location: z.string().min(3, 'La ubicación es requerida'),
   targetAudience: z.enum(['Infantil', 'Adultos', 'Todos']),
@@ -79,8 +78,7 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
       technicalRequirements: [],
       tags: [],
       isFavorite: false,
-      recurrence: { type: 'none' },
-      discipline: 'Teatro'
+      recurrence: { type: 'none' }
     }
   });
 
@@ -96,7 +94,6 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
   };
 
   const onSubmit = async (data: CulturalEvent) => {
-    console.log('Datos del formulario:', data);
     try {
       const action = event ? 'UPDATE_EVENT' : 'ADD_EVENT';
       const payload = {
@@ -106,14 +103,13 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
         imageBase64: data.image?.data || null
       };
       
-      console.log('Dispatching:', payload);
       dispatch({
         type: action,
         payload
       });
       onComplete?.();
     } catch (error) {
-      console.error('Error detallado:', error);
+      console.error('Error al guardar el evento:', error);
       alert('Error al guardar el evento. Por favor, intente nuevamente.');
     }
   };
@@ -223,27 +219,6 @@ export const EventoCulturalForm: React.FC<EventFormProps> = ({ event, onComplete
               <p className="mt-1 text-sm text-red-600">{errors.eventType.message}</p>
             )}
           </div>
-        </div>
-
-        {/* Disciplina */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Disciplina
-          </label>
-          <select
-            {...register('discipline')}
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-          >
-            <option value="">Seleccionar disciplina...</option>
-            <option value="Teatro">Teatro</option>
-            <option value="Danza">Danza</option>
-            <option value="Artes Visuales">Artes Visuales</option>
-            <option value="Música">Música</option>
-            <option value="Literatura">Literatura</option>
-          </select>
-          {errors.discipline && (
-            <p className="mt-1 text-sm text-red-600">{errors.discipline.message}</p>
-          )}
         </div>
 
         {/* Fecha y Recurrencia */}

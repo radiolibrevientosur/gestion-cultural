@@ -1,24 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CulturalProvider } from './context/CulturalContext';
-import { Calendar, Heart, Users, Home, PlusCircle, Sun, Moon } from 'lucide-react';
+import { Calendar, Heart, Users, Home, PlusCircle, Sun, Moon, MoreVertical, Settings, Bell, LogOut, User, Search, Star } from 'lucide-react';
 import { EventoCulturalForm } from './components/cultural/EventoCulturalForm';
 import { BirthdayForm } from './components/cultural/BirthdayForm';
 import { TaskForm } from './components/cultural/TaskForm';
+import { CreateMenu } from './components/cultural/CreateMenu';
+import { Favorites } from './components/cultural/Favorites';
+import { ContactList } from './components/cultural/ContactList';
+import { CalendarView } from './components/cultural/CalendarView';
+import { OfflineIndicator } from './components/ui/OfflineIndicator';
+import { NotificationList } from './components/ui/NotificationList';
+import { NotificationSettings } from './components/ui/NotificationSettings';
+import { UserProfile } from './components/cultural/UserProfile';
+import { LanguageSettings } from './components/ui/LanguageSettings';
+import { PrivacySettings } from './components/ui/PrivacySettings';
+import { SearchModal } from './components/ui/SearchModal';
+import { useTheme } from './hooks/useTheme';
+import { useNotifications } from './hooks/useNotifications';
+import { useCultural } from './context/CulturalContext';
+import type { ActiveView, CulturalEvent } from './types/cultural';
 import { EventCard } from './components/cultural/EventCard';
 import { BirthdayCulturalCard } from './components/cultural/BirthdayCulturalCard';
 import { TaskCulturalKanban } from './components/cultural/TaskCulturalKanban';
-import { CalendarView } from './components/cultural/CalendarView';
-import { ContactList } from './components/cultural/ContactList';
-import { OfflineIndicator } from './components/ui/OfflineIndicator';
-import { useTheme } from './hooks/useTheme';
-import { useCultural } from './context/CulturalContext';
-import type { CulturalEvent } from './types/cultural';
+import { ErrorBoundary } from 'react-error-boundary';
 
-type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'contactos' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea' | 'calendario';
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+  return (
+    <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+      <h2 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
+        Error en el componente
+      </h2>
+      <p className="text-red-600 dark:text-red-400 text-sm">
+        {error.message}
+      </p>
+      <button
+        onClick={resetErrorBoundary}
+        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+}
 
 function Dashboard() {
   const { state } = useCultural();
   const [editingEvent, setEditingEvent] = useState<CulturalEvent | null>(null);
+
+  const safeEvents = state.events || [];
+  const safeBirthdays = state.birthdays || [];
+  const safeTasks = state.tasks || [];
   
   return (
     <div className="space-y-8">
@@ -29,12 +60,13 @@ function Dashboard() {
         />
       ) : (
         <>
-          {/* Eventos Culturales */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Eventos Culturales</h2>
-            {state.events.length > 0 ? (
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Eventos Culturales
+            </h2>
+            {safeEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {state.events.map(event => (
+                {safeEvents.map(event => (
                   <EventCard 
                     key={event.id} 
                     event={event} 
@@ -43,31 +75,39 @@ function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No hay eventos creados</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No hay eventos creados
+              </p>
             )}
           </section>
 
-          {/* Próximos Cumpleaños */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Próximos Cumpleaños</h2>
-            {state.birthdays.length > 0 ? (
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Próximos Cumpleaños
+            </h2>
+            {safeBirthdays.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {state.birthdays.map(birthday => (
+                {safeBirthdays.map(birthday => (
                   <BirthdayCulturalCard key={birthday.id} birthday={birthday} />
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No hay cumpleaños registrados</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No hay cumpleaños registrados
+              </p>
             )}
           </section>
 
-          {/* Tareas */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Tareas</h2>
-            {state.tasks.length > 0 ? (
-              <TaskCulturalKanban />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Tareas
+            </h2>
+            {safeTasks.length > 0 ? (
+              <TaskCulturalKanban tasks={safeTasks} />
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">No hay tareas creadas</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No hay tareas creadas
+              </p>
             )}
           </section>
         </>
@@ -76,134 +116,46 @@ function Dashboard() {
   );
 }
 
-function CreateMenu({ onSelectOption }: { onSelectOption: (view: ActiveView) => void }) {
-  return (
-    <div className="p-4 space-y-4">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Crear Nuevo</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button 
-          onClick={() => onSelectOption('nuevo-evento')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
-        >
-          <h3 className="font-medium text-lg text-cultural-escenicas mb-2">Evento Cultural</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Crear un nuevo evento cultural con todos los detalles</p>
-        </button>
-        <button 
-          onClick={() => onSelectOption('nuevo-cumpleanos')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
-        >
-          <h3 className="font-medium text-lg text-cultural-visuales mb-2">Cumpleaños</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Agregar un nuevo cumpleaños al calendario</p>
-        </button>
-        <button 
-          onClick={() => onSelectOption('nueva-tarea')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
-        >
-          <h3 className="font-medium text-lg text-cultural-musicales mb-2">Tarea</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Crear una nueva tarea o recordatorio</p>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Favorites() {
-  const { state } = useCultural();
-  
-  const favoriteEvents = state.events.filter(event => event.isFavorite);
-  const favoriteBirthdays = state.birthdays.filter(birthday => birthday.isFavorite);
-  const favoriteTasks = state.tasks.filter(task => task.isFavorite);
-  const favoriteContacts = state.contacts?.filter(contact => contact.isFavorite) || [];
-  
-  return (
-    <div className="p-4 space-y-8">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Favoritos</h2>
-      
-      
-      {/* Eventos Favoritos */}
-      <section>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Eventos Favoritos</h3>
-        {favoriteEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoriteEvents.map(event => (
-              <EventCard 
-                key={event.id} 
-                event={event}
-                onEdit={() => {}} 
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">No hay eventos favoritos</p>
-        )}
-      </section>
-
-      {/* Cumpleaños Favoritos */}
-      <section>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Cumpleaños Favoritos</h3>
-        {favoriteBirthdays.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoriteBirthdays.map(birthday => (
-              <BirthdayCulturalCard key={birthday.id} birthday={birthday} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">No hay cumpleaños favoritos</p>
-        )}
-      </section>
-
-      {/* Tareas Favoritas */}
-      <section>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Tareas Favoritas</h3>
-        {favoriteTasks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoriteTasks.map(task => (
-              <div key={task.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">{task.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{task.description}</p>
-                <div className="mt-2 text-sm">
-                  <span className={`inline-block px-2 py-1 rounded ${
-                    task.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  }`}>
-                    {task.priority}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">No hay tareas favoritas</p>
-        )}
-      </section>
-
-      {/* Contactos Favoritos */}
-      <section>
-        <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Contactos Favoritos</h3>
-        {favoriteContacts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoriteContacts.map(contact => (
-              <div key={contact.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">{contact.name}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.role}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.discipline}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">No hay contactos favoritos</p>
-        )}
-      </section>
-    </div>
-  );
-}
-
 function App() {
   const [activeView, setActiveView] = useState<ActiveView>('inicio');
   const { theme, toggleTheme } = useTheme();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const configRef = useRef<HTMLDivElement>(null);
+  const { unreadCount, isPermissionGranted, requestNotificationPermission } = useNotifications();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const menu = menuRef.current;
+      const config = configRef.current;
+      
+      if (menu && !menu.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+      if (config && !config.contains(event.target as Node)) {
+        setIsConfigOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    console.log('Cerrar sesión');
+  };
 
   const renderView = () => {
+    if (showProfile) {
+      return <UserProfile />;
+    }
+
     switch (activeView) {
       case 'crear':
         return <CreateMenu onSelectOption={setActiveView} />;
@@ -228,26 +180,160 @@ function App() {
     <CulturalProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
         <OfflineIndicator />
+        {showNotifications && (
+          <NotificationList onClose={() => setShowNotifications(false)} />
+        )}
+        {showSearchModal && (
+          <SearchModal isOpen={showSearchModal} onClose={() => setShowSearchModal(false)} />
+        )}
         <header className="bg-white dark:bg-gray-800 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
               <div className="flex-shrink-0 flex items-center">
                 <Calendar className="h-8 w-8 text-cultural-escenicas" />
-                <span className="ml-2 text-xl font-semibold text-gray-900 dark:text-white">Gestión Cultural</span>
+                <span className="ml-2 text-xl font-semibold text-gray-900 dark:text-white">
+                  Gestión Cultural
+                </span>
               </div>
-              <button
-                onClick={toggleTheme}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-              </button>
+              
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowSearchModal(true)}
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <Search className="h-6 w-6" />
+                </button>
+                
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <MoreVertical className="h-6 w-6" />
+                  </button>
+
+                  {isMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-50">
+                      <button
+                        onClick={() => setShowNotifications(true)}
+                        className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                      >
+                        <div className="flex items-center">
+                          <Bell className="h-4 w-4 mr-2" />
+                          Notificaciones
+                        </div>
+                        {unreadCount > 0 && (
+                          <span className="bg-cultural-escenicas text-white text-xs px-2 py-1 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <NotificationSettings
+                        onChange={(enabled) => {
+                          if (enabled && !isPermissionGranted) {
+                            requestNotificationPermission();
+                          }
+                        }}
+                      />
+
+                      <button
+                        onClick={() => {
+                          setShowProfile(true);
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Mi Cuenta
+                      </button>
+
+                      <button
+                        className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        onClick={toggleTheme}
+                      >
+                        {theme === 'dark' ? (
+                          <Sun className="h-4 w-4 mr-2" />
+                        ) : (
+                          <Moon className="h-4 w-4 mr-2" />
+                        )}
+                        Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}
+                      </button>
+
+                      <div className="relative" ref={configRef}>
+                        <button
+                          className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                          onClick={() => setIsConfigOpen(!isConfigOpen)}
+                        >
+                          <div className="flex items-center">
+                            <Settings className="h-4 w-4 mr-2" />
+                            Configuración
+                          </div>
+                          <span className="text-xs">▼</span>
+                        </button>
+
+                        {isConfigOpen && (
+                          <div className="absolute left-0 top-full w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 mt-1 z-50">
+                            <button
+                              onClick={() => {
+                                setShowLanguageSettings(true);
+                                setIsMenuOpen(false);
+                                setIsConfigOpen(false);
+                              }}
+                              className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              Idioma
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowPrivacySettings(true);
+                                setIsMenuOpen(false);
+                                setIsConfigOpen(false);
+                              }}
+                              className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              Privacidad
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                      <button
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Cerrar Sesión
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
         <main className="flex-1 max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8 mb-16">
           <div className="px-4 py-6 sm:px-0">
-            {renderView()}
+            <ErrorBoundary
+              FallbackComponent={ErrorFallback}
+              onReset={() => {
+                setActiveView('inicio');
+                setShowProfile(false);
+                setShowLanguageSettings(false);
+                setShowPrivacySettings(false);
+              }}
+            >
+              {showLanguageSettings ? (
+                <LanguageSettings />
+              ) : showPrivacySettings ? (
+                <PrivacySettings />
+              ) : (
+                renderView()
+              )}
+            </ErrorBoundary>
           </div>
         </main>
 
@@ -255,16 +341,33 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-around h-16">
               <button
-                onClick={() => setActiveView('inicio')}
+                onClick={() => {
+                  setActiveView('inicio');
+                  setShowProfile(false);
+                }}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
                   activeView === 'inicio' ? 'text-cultural-escenicas' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 <Home className="h-6 w-6" />
                 <span className="mt-1 text-xs">Inicio</span>
+              </button> <button
+                onClick={() => {
+                  setActiveView('favoritos');
+                  setShowProfile(false);
+                }}
+                className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                  activeView === 'favoritos' ? 'text-cultural-visuales' : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <Star className="h-6 w-6" />
+                <span className="mt-1 text-xs">Favoritos</span>
               </button>
               <button
-                onClick={() => setActiveView('crear')}
+                onClick={() => {
+                  setActiveView('crear');
+                  setShowProfile(false);
+                }}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
                   activeView === 'crear' ? 'text-cultural-escenicas' : 'text-gray-500 dark:text-gray-400'
                 }`}
@@ -273,16 +376,10 @@ function App() {
                 <span className="mt-1 text-xs">Crear</span>
               </button>
               <button
-                onClick={() => setActiveView('favoritos')}
-                className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  activeView === 'favoritos' ? 'text-cultural-visuales' : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                <Heart className="h-6 w-6" />
-                <span className="mt-1 text-xs">Favoritos</span>
-              </button>
-              <button
-                onClick={() => setActiveView('calendario')}
+                onClick={() => {
+                  setActiveView('calendario');
+                  setShowProfile(false);
+                }}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
                   activeView === 'calendario' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
                 }`}
@@ -291,7 +388,10 @@ function App() {
                 <span className="mt-1 text-xs">Calendario</span>
               </button>
               <button
-                onClick={() => setActiveView('contactos')}
+                onClick={() => {
+                  setActiveView('contactos');
+                  setShowProfile(false);
+                }}
                 className={`flex flex-col items-center justify-center w-full hover:bg-gray-50 dark:hover:bg-gray-700 ${
                   activeView === 'contactos' ? 'text-cultural-musicales' : 'text-gray-500 dark:text-gray-400'
                 }`}

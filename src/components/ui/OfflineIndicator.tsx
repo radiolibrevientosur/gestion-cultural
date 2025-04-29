@@ -12,7 +12,7 @@ export const OfflineIndicator: React.FC = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className={`fixed top-4 right-16 flex items-center space-x-2 px-1 py-1 rounded-lg shadow-lg ${
+        className={`fixed top-4 right-11 flex items-center space-x-2 px-1 py-1 rounded-lg shadow-lg ${
           isOnline ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
         }`}
       >

@@ -7,38 +7,33 @@ interface NotificationSettingsProps {
 }
 
 export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onChange }) => {
-  const { isPermissionGranted } = useNotifications();
+  const { isPermissionGranted, requestNotificationPermission } = useNotifications();
 
   const handleToggle = async () => {
     if (!isPermissionGranted) {
       const granted = await requestNotificationPermission();
-      if (granted) {
-        onChange?.(true);
-      }
+      onChange?.(granted);
     } else {
       onChange?.(false);
     }
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <button
-        onClick={handleToggle}
-        className={`p-2 rounded-full ${
-          isPermissionGranted
-            ? 'bg-cultural-escenicas text-white'
-            : 'bg-gray-200 text-gray-500'
-        }`}
-      >
-        {isPermissionGranted ? (
-          <Bell className="h-5 w-5" />
-        ) : (
-          <BellOff className="h-5 w-5" />
-        )}
-      </button>
-      <span className="text-sm text-gray-600 dark:text-gray-300">
-        {isPermissionGranted ? 'Notificaciones activadas' : 'Notificaciones desactivadas'}
-      </span>
-    </div>
+    <button
+      onClick={handleToggle}
+      className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 w-full"
+    >
+      {isPermissionGranted ? (
+        <>
+          <Bell className="h-4 w-4 mr-2" />
+          Notificaciones activadas
+        </>
+      ) : (
+        <>
+          <BellOff className="h-4 w-4 mr-2" />
+          Activar notificaciones
+        </>
+      )}
+    </button>
   );
 };

@@ -36,7 +36,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ event, isOpen, onClose, 
 📅 ${format(event.date, "d 'de' MMMM", { locale: es })} | 🕒 ${format(event.date, 'HH:mm')}
 📍 ${event.location}
 👥 Público: ${event.targetAudience}
-🎭 ${event.eventType} - ${event.discipline}
+🎭 ${event.category} - ${event.eventType}
 
 ${event.description}
 
@@ -112,7 +112,7 @@ ${event.cost.type === 'free' ? '🎟️ Entrada gratuita' : `💵 Precio: $${eve
                     <p>🕒 {format(event.date, 'HH:mm')}</p>
                     <p>📍 {event.location}</p>
                     <p>👥 {event.targetAudience}</p>
-                    <p>🎭 {event.eventType} - {event.discipline}</p>
+                    <p>🎭 {event.category} - {event.eventType}</p>
                     <p>{event.cost.type === 'free' ? '🎟️ Entrada gratuita' : `💵 Precio: $${event.cost.amount}`}</p>
                   </div>
                 </>
