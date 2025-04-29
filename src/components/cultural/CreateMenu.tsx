@@ -33,6 +33,14 @@ export const CreateMenu: React.FC<CreateMenuProps> = ({ onSelectOption }) => {
           <h3 className="font-medium text-lg text-cultural-musicales mb-2">Tarea</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Crear una nueva tarea</p>
         </button>
+
+        <button 
+          onClick={() => onSelectOption('nuevo-articulo')}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-left"
+        >
+          <h3 className="font-medium text-lg text-cultural-escenicas mb-2">Artículo de Prensa</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Publicar un nuevo artículo de prensa</p>
+        </button>
       </div>
     </div>
   );

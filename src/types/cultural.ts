@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'contactos' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea' | 'calendario';
+export type ActiveView = 'inicio' | 'crear' | 'favoritos' | 'contactos' | 'nuevo-evento' | 'nuevo-cumpleanos' | 'nueva-tarea' | 'calendario' | 'nuevo-articulo' | 'nuevo-post';
 
 export type Category =
   | 'CINE Y MEDIOS AUDIOVISUALES'
@@ -21,25 +21,46 @@ export type EventType = {
   'OTROS': [];
 }[Category];
 
-// Nuevos tipos añadidos
 export type ReactionType = 'like' | 'love' | 'celebrate' | 'interesting';
-
-export interface Comment {
-  id: string;
-  eventId: string;
-  author: string;
-  text: string;
-  date: Date;
-}
+export const DEFAULT_REACTIONS: Record<ReactionType, number> = {
+  like: 0,
+  love: 0,
+  celebrate: 0,
+  interesting: 0
+};
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'event' | 'birthday' | 'task';
+  type: 'event' | 'birthday' | 'task' | 'post';
   read: boolean;
   date: Date;
   entityId: string;
+}
+interface InteractiveItem {
+  id: string;
+  reactions: Record<ReactionType, number>;
+  comments: Comment[];
+  isFavorite: boolean;
+}
+
+// Actualizar interfaces principales
+export interface CulturalEvent extends InteractiveItem {
+  title: string;
+  description: string;
+  // ... otros campos específicos de eventos
+}
+
+export interface ArtistBirthday extends InteractiveItem {
+  name: string;
+  // ... otros campos específicos de cumpleaños
+}
+
+export interface Post extends InteractiveItem {
+  content: string;
+  author: string;
+  // ... otros campos específicos de posts
 }
 
 export interface CulturalEvent {
@@ -74,7 +95,6 @@ export interface CulturalEvent {
     endDate?: string;
     daysOfWeek?: number[];
   };
-  // Nuevas propiedades añadidas
   reactions: Record<ReactionType, number>;
   comments: Comment[];
 }
@@ -131,6 +151,38 @@ export interface Contact {
   facebook?: string;
 }
 
+export interface PressArticle {
+  id: string;
+  title: string;
+  author: string;
+  summary: string;
+  content: string;
+  date: Date;
+  category: Category;
+  tags: string[];
+  image?: {
+    data: string;
+    type: string;
+  };
+  isFavorite: boolean;
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  author: string;
+  date: Date;
+  media?: {
+    type: 'image' | 'video' | 'document';
+    url: string;
+    thumbnail?: string;
+  }[];
+  links?: string[];
+  reactions: Record<ReactionType, number>;
+  comments: Comment[];
+  isFavorite: boolean;
+}
+
 export interface CulturalContextType {
   state: {
     events: CulturalEvent[];
@@ -138,11 +190,12 @@ export interface CulturalContextType {
     tasks: CulturalTask[];
     contacts: Contact[];
     notifications: Notification[];
+    pressArticles: PressArticle[];
+    posts: Post[];
   };
   dispatch: React.Dispatch<CulturalAction>;
 }
 
-// Acciones actualizadas
 export type CulturalAction =
   | { type: 'ADD_EVENT'; payload: CulturalEvent }
   | { type: 'UPDATE_EVENT'; payload: CulturalEvent }
@@ -161,6 +214,33 @@ export type CulturalAction =
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'DELETE_NOTIFICATION'; payload: string }
   | { type: 'LOAD_STATE'; payload: CulturalContextType['state'] }
-  // Nuevas acciones añadidas
   | { type: 'ADD_REACTION'; payload: { eventId: string; reactionType: ReactionType } }
-  | { type: 'ADD_COMMENT'; payload: { eventId: string; comment: Comment } };
+  | { type: 'ADD_COMMENT'; payload: { eventId: string; comment: Comment } }
+  | { type: 'ADD_PRESS_ARTICLE'; payload: PressArticle }
+  | { type: 'UPDATE_PRESS_ARTICLE'; payload: PressArticle }
+  | { type: 'DELETE_PRESS_ARTICLE'; payload: string }
+  | { type: 'ADD_POST'; payload: Post }
+  | { type: 'UPDATE_POST'; payload: Post }
+  | { type: 'DELETE_POST'; payload: string }
+  | { type: 'ADD_POST_REACTION'; payload: { postId: string; reactionType: ReactionType } }
+  | { type: 'ADD_POST_COMMENT'; payload: { postId: string; comment: Comment } };
+export type Post = {
+  id: string;
+  content: string;
+  author: string;
+  date: Date;
+  media?: Array<{
+    type: 'image' | 'video' | 'document';
+    url: string;
+    thumbnail?: string;
+  }>;
+  links?: string[];
+  reactions: {
+    like: number;
+    love: number;
+    celebrate: number;
+    interesting: number;
+  };
+  comments: Comment[];
+  isFavorite: boolean;
+};
