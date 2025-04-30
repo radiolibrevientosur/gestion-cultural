@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCultural } from '../../context/CulturalContext';
 import { 
   Heart, MessageCircle, Share2, Send, Link as LinkIcon,
-  Image, Video, FileText, ThumbsUp, PartyPopper, Zap
+  Image, Video, FileText, ThumbsUp, PartyPopper, Zap, Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -113,7 +113,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               {reactionType === 'like' && <ThumbsUp className="h-5 w-5" />}
               {reactionType === 'love' && <Heart className="h-5 w-5" />}
               {reactionType === 'celebrate' && <PartyPopper className="h-5 w-5" />}
-              {reactionType === 'interesting' && <Zap className="h-5 w-5" />}
+              {reactionType === 'interesting' && <Sparkles className="h-5 w-5" />}
               <span>{count}</span>
             </button>
           ))}
