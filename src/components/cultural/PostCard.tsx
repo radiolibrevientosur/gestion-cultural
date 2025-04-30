@@ -1,38 +1,25 @@
 import React, { useState } from 'react';
 import { useCultural } from '../../context/CulturalContext';
 import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Send, 
-  Link as LinkIcon, 
-  Image, 
-  Video, 
-  FileText, 
-  ThumbsUp, 
-  PartyPopper, 
-  Zap  // Sin coma al final
+  Heart, MessageCircle, Share2, Send, Link as LinkIcon,
+  Image, Video, FileText, ThumbsUp, PartyPopper, Zap
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Post, Comment } from '../../types/cultural';
+import type { Post, Comment, ReactionType } from '../../types/cultural';
 
 interface PostCardProps {
   post: Post;
-  onComment?: () => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { dispatch } = useCultural();
   const [newComment, setNewComment] = useState('');
 
-  const handleAddReaction = (reactionType: 'like' | 'love' | 'celebrate' | 'interesting') => {
+  const handleAddReaction = (reactionType: ReactionType) => {
     dispatch({
-      type: 'ADD_REACTION',  // Actualizado para usar el tipo unificado
-      payload: {
-        entityId: post.id,
-        reactionType
-      }
+      type: 'ADD_POST_REACTION',
+      payload: { postId: post.id, reactionType }
     });
   };
 
@@ -41,18 +28,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
     const comment: Comment = {
       id: crypto.randomUUID(),
-      entityId: post.id,  // Actualizado para usar entityId
+      postId: post.id,
       author: 'Usuario',
       text: newComment,
       date: new Date()
     };
 
     dispatch({
-      type: 'ADD_COMMENT',  // Tipo unificado
-      payload: {
-        entityId: post.id,
-        comment
-      }
+      type: 'ADD_POST_COMMENT',
+      payload: { postId: post.id, comment }
     });
 
     setNewComment('');
@@ -76,25 +60,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
-      {/* Media y enlaces */}
+      {/* Media */}
       {post.media?.map((item, index) => (
-        <div key={index} className="grid grid-cols-1 gap-2 my-4">
+        <div key={`media-${index}-${item.url}`} className="grid grid-cols-1 gap-2 my-4">
           <div className="relative rounded-xl overflow-hidden">
             {item.type === 'image' && (
-              <img 
-                src={item.url} 
-                alt="" 
-                className="w-full h-48 object-cover" 
-                loading="lazy"
-              />
+              <img src={item.url} alt="" className="w-full h-48 object-cover" loading="lazy" />
             )}
             {item.type === 'video' && (
-              <video 
-                src={item.url} 
-                className="w-full h-48 object-cover" 
-                controls
-                preload="metadata"
-              />
+              <video src={item.url} className="w-full h-48 object-cover" controls preload="metadata" />
             )}
             {item.type === 'document' && (
               <div className="w-full h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -105,19 +79,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       ))}
 
-      {post.links?.map((link, index) => (
-        <div key={index} className="my-4 space-y-2">
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
-          >
-            <LinkIcon className="h-4 w-4" />
-            <span className="truncate">{link}</span>
-          </a>
-        </div>
-      ))}
+      {/* Enlaces */}
+      {post.links?.map((link, index) => {
+        const url = typeof link === 'string' ? link : link.url;
+        return (
+          <div key={`link-${index}-${btoa(url)}`} className="my-4 space-y-2">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+            >
+              <LinkIcon className="h-4 w-4" />
+              <span className="truncate">{url}</span>
+            </a>
+          </div>
+        );
+      })}
 
       {/* Acciones */}
       <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 mt-4 pt-3 border-t dark:border-gray-700">
@@ -125,7 +103,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           {Object.entries(post.reactions).map(([reactionType, count]) => (
             <button
               key={reactionType}
-              onClick={() => handleAddReaction(reactionType as typeof ReactionType)}
+              onClick={() => handleAddReaction(reactionType as ReactionType)}
               className={`flex items-center gap-1 hover:text-${
                 reactionType === 'like' ? 'blue' :
                 reactionType === 'love' ? 'red' :
@@ -147,7 +125,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </div>
 
       {/* Comentarios */}
-      {post.comments.length > 0 && (
+      {(post.comments?.length ?? 0) > 0 && (
         <div className="mt-4 space-y-4">
           {post.comments.map((comment) => (
             <div key={comment.id} className="flex items-start gap-3">
@@ -173,7 +151,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Añadir un comentario..."
           className="flex-1 p-2 text-sm border rounded-full bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+          onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
         />
         <button
           onClick={handleAddComment}
