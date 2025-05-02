@@ -4,15 +4,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCultural } from '../../context/CulturalContext';
 import { ImageUpload } from '../ui/ImageUpload';
-import type { PressArticle, Category } from '../../types/cultural';
+import type { PressArticle } from '../../types/cultural';
 
 const pressArticleSchema = z.object({
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
   author: z.string().min(3, 'El autor es requerido'),
-  summary: z.string().min(10, 'El sumario debe tener al menos 10 caracteres'),
+  summary: z.string().min(10, 'El resumen debe tener al menos 10 caracteres'),
   content: z.string().min(50, 'El contenido debe tener al menos 50 caracteres'),
-  category: z.enum(['CINE Y MEDIOS AUDIOVISUALES', 'ARTES VISUALES', 'ARTES ESCÉNICAS Y MUSICALES', 'PROMOCIÓN DEL LIBRO Y LA LECTURA', 'PATRIMONIO CULTURAL', 'ECONOMÍA CULTURAL', 'OTROS'] as const),
-  tags: z.array(z.string()).default([]),
+  category: z.enum(['CINE Y MEDIOS AUDIOVISUALES', 'ARTES VISUALES', 'ARTES ESCÉNICAS Y MUSICALES', 'PROMOCIÓN DEL LIBRO Y LA LECTURA', 'PATRIMONIO CULTURAL', 'ECONOMÍA CULTURAL', 'OTROS']),
+  tags: z.string().transform(tags => tags.split(',').map(tag => tag.trim())),
   image: z.object({
     data: z.string(),
     type: z.string()
@@ -27,10 +27,15 @@ interface PressArticleFormProps {
 
 export const PressArticleForm: React.FC<PressArticleFormProps> = ({ article, onComplete }) => {
   const { dispatch } = useCultural();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<PressArticle>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<z.infer<typeof pressArticleSchema>>({
     resolver: zodResolver(pressArticleSchema),
-    defaultValues: article || {
-      tags: [],
+    defaultValues: article ? {
+      ...article,
+      tags: article.tags.join(', '),
+      image: article.image,
+      isFavorite: article.isFavorite
+    } : {
+      tags: '',
       isFavorite: false
     }
   });
@@ -39,16 +44,20 @@ export const PressArticleForm: React.FC<PressArticleFormProps> = ({ article, onC
     setValue('image', image);
   };
 
-  const onSubmit = (data: any) => {
-    const action = article ? 'UPDATE_PRESS_ARTICLE' : 'ADD_PRESS_ARTICLE';
+  const onSubmit = (data: z.infer<typeof pressArticleSchema>) => {
+    const payload: PressArticle = {
+      ...data,
+      id: article?.id || crypto.randomUUID(),
+      date: article?.date || new Date(),
+      reactions: article?.reactions || { like: 0, love: 0, celebrate: 0, interesting: 0 },
+      comments: article?.comments || []
+    };
+
     dispatch({
-      type: action,
-      payload: {
-        ...data,
-        id: article?.id || crypto.randomUUID(),
-        date: new Date()
-      }
+      type: article ? 'UPDATE_PRESS_ARTICLE' : 'ADD_PRESS_ARTICLE',
+      payload
     });
+
     onComplete?.();
   };
 
@@ -120,11 +129,26 @@ export const PressArticleForm: React.FC<PressArticleFormProps> = ({ article, onC
               <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
             )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Etiquetas (separadas por comas)
+            </label>
+            <input
+              type="text"
+              {...register('tags')}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              placeholder="Ej: cultura, arte, sociedad"
+            />
+            {errors.tags && (
+              <p className="mt-1 text-sm text-red-600">{errors.tags.message}</p>
+            )}
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Sumario
+            Resumen
           </label>
           <textarea
             {...register('summary')}

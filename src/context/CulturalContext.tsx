@@ -164,6 +164,30 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
           posts: state.posts.filter(post => post.id !== action.payload)
         };
 
+      case 'ADD_PRESS_ARTICLE':
+        return {
+          ...state,
+          pressArticles: [{
+            ...action.payload,
+            reactions: { like: 0, love: 0, celebrate: 0, interesting: 0 },
+            comments: []
+          }, ...state.pressArticles]
+        };
+
+      case 'UPDATE_PRESS_ARTICLE':
+        return {
+          ...state,
+          pressArticles: state.pressArticles.map(article =>
+            article.id === action.payload.id ? action.payload : article
+          )
+        };
+
+      case 'DELETE_PRESS_ARTICLE':
+        return {
+          ...state,
+          pressArticles: state.pressArticles.filter(article => article.id !== action.payload)
+        };
+
       default:
         return state;
     }

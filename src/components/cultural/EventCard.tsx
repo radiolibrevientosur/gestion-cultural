@@ -14,7 +14,8 @@ import {
   Zap, 
   PartyPopper, 
   Send, 
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react';
 import type { CulturalEvent, ReactionType, Comment } from '../../types/cultural';
 import { useCultural } from '../../context/CulturalContext';
