@@ -13,6 +13,10 @@ export default {
           visuales: '#4B0082',
           musicales: '#1E90FF'
         }
+      },
+      transitionProperty: {
+        'height': 'height',
+        'opacity': 'opacity'
       }
     },
   },

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useCultural } from '../../context/CulturalContext';
 import { 
   Heart, MessageCircle, Share2, Send, Link as LinkIcon,
-  Image, Video, FileText, ThumbsUp, PartyPopper, Zap, Sparkles
+  Image, Video, FileText, ThumbsUp, PartyPopper, Zap, Sparkles,
+  Mic, Play, Pause
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -15,6 +16,7 @@ interface PostCardProps {
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { dispatch } = useCultural();
   const [newComment, setNewComment] = useState('');
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null);
 
   const handleAddReaction = (reactionType: ReactionType) => {
     dispatch({
@@ -40,6 +42,34 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     });
 
     setNewComment('');
+  };
+
+  const toggleAudioPlay = (audioUrl: string) => {
+    if (playingAudio === audioUrl) {
+      const audioElement = document.querySelector(`audio[src="${audioUrl}"]`) as HTMLAudioElement;
+      if (audioElement) {
+        audioElement.pause();
+        setPlayingAudio(null);
+      }
+    } else {
+      if (playingAudio) {
+        const previousAudio = document.querySelector(`audio[src="${playingAudio}"]`) as HTMLAudioElement;
+        if (previousAudio) {
+          previousAudio.pause();
+        }
+      }
+      const audioElement = document.querySelector(`audio[src="${audioUrl}"]`) as HTMLAudioElement;
+      if (audioElement) {
+        audioElement.play();
+        setPlayingAudio(audioUrl);
+      }
+    }
+  };
+
+  const handleAudioEnded = (audioUrl: string) => {
+    if (playingAudio === audioUrl) {
+      setPlayingAudio(null);
+    }
   };
 
   return (
@@ -75,27 +105,36 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 <FileText className="h-12 w-12 text-gray-400" />
               </div>
             )}
+            {item.type === 'voice' && (
+              <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg flex items-center gap-4">
+                <button
+                  onClick={() => toggleAudioPlay(item.url)}
+                  className="p-3 bg-cultural-escenicas text-white rounded-full hover:bg-cultural-escenicas/90 transition-colors"
+                >
+                  {playingAudio === item.url ? (
+                    <Pause className="h-5 w-5" />
+                  ) : (
+                    <Play className="h-5 w-5" />
+                  )}
+                </button>
+                <div className="flex-1">
+                  <audio
+                    src={item.url}
+                    onEnded={() => handleAudioEnded(item.url)}
+                    className="hidden"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Mic className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      Nota de voz
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ))}
-
-      {/* Enlaces */}
-      {post.links?.map((link, index) => {
-        const url = typeof link === 'string' ? link : link.url;
-        return (
-          <div key={`link-${index}-${btoa(url)}`} className="my-4 space-y-2">
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
-            >
-              <LinkIcon className="h-4 w-4" />
-              <span className="truncate">{url}</span>
-            </a>
-          </div>
-        );
-      })}
 
       {/* Acciones */}
       <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 mt-4 pt-3 border-t dark:border-gray-700">
