@@ -13,6 +13,15 @@ export type Category =
 
 export type ReactionType = 'like' | 'love' | 'celebrate' | 'interesting';
 
+export type MediaType = 'image' | 'video' | 'document' | 'voice' | 'sticker';
+
+export interface Media {
+  type: MediaType;
+  url: string;
+  thumbnail?: string;
+  duration?: number; // For voice notes
+}
+
 export interface Comment {
   id: string;
   entityId: string;
@@ -26,6 +35,21 @@ export interface InteractiveEntity {
   reactions: Record<ReactionType, number>;
   comments: Comment[];
   isFavorite: boolean;
+}
+
+export interface Post extends InteractiveEntity {
+  content: string;
+  author: string;
+  date: Date;
+  media?: Media[];
+  links?: Array<string | { url: string; preview?: LinkPreview }>;
+}
+
+export interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
 }
 
 export interface PressArticle extends InteractiveEntity {

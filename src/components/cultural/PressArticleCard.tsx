@@ -5,15 +5,16 @@ import { Edit, Trash, Share2, Star } from 'lucide-react';
 import type { PressArticle } from '../../types/cultural';
 import { useCultural } from '../../context/CulturalContext';
 import { ShareModal } from './ShareModal';
+import { PressArticleForm } from './PressArticleForm';
 
 interface PressArticleCardProps {
   article: PressArticle;
-  onEdit?: (article: PressArticle) => void;
 }
 
-export const PressArticleCard: React.FC<PressArticleCardProps> = ({ article, onEdit }) => {
+export const PressArticleCard: React.FC<PressArticleCardProps> = ({ article }) => {
   const { dispatch } = useCultural();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const toggleFavorite = () => {
     dispatch({
@@ -30,6 +31,15 @@ export const PressArticleCard: React.FC<PressArticleCardProps> = ({ article, onE
       });
     }
   };
+
+  if (isEditing) {
+    return (
+      <PressArticleForm
+        article={article}
+        onComplete={() => setIsEditing(false)}
+      />
+    );
+  }
 
   return (
     <>
@@ -68,7 +78,7 @@ export const PressArticleCard: React.FC<PressArticleCardProps> = ({ article, onE
                 <Star className="h-5 w-5" fill={article.isFavorite ? "currentColor" : "none"} />
               </button>
               <button
-                onClick={() => onEdit?.(article)}
+                onClick={() => setIsEditing(true)}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <Edit className="h-5 w-5" />
