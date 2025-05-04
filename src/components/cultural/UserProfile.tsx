@@ -1,8 +1,4 @@
-import React, { useState } from 'react';
-import { ImageUpload } from '../ui/ImageUpload';
-import { useCultural } from '../../context/CulturalContext';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Calendar, 
   Users, 
@@ -15,11 +11,16 @@ import {
   Globe,
   Image as ImageIcon,
   FileText,
-  Edit3
+  Edit3,
+  Plus,
+  X,
+  Upload
 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useCultural } from '../../context/CulturalContext';
+import { ImageUpload } from '../ui/ImageUpload';
 
 const userProfileSchema = z.object({
   username: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
@@ -42,6 +43,10 @@ const userProfileSchema = z.object({
   image: z.object({
     data: z.string(),
     type: z.string()
+  }).optional(),
+  coverImage: z.object({
+    data: z.string(),
+    type: z.string()
   }).optional()
 });
 
@@ -54,11 +59,124 @@ interface PortfolioItem {
   link?: string;
 }
 
+interface PortfolioModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (item: PortfolioItem) => void;
+  initialData?: PortfolioItem;
+}
+
+const PortfolioModal: React.FC<PortfolioModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialData
+}) => {
+  const [formData, setFormData] = useState<PortfolioItem>(initialData || {
+    title: '',
+    description: '',
+    imageUrl: '',
+    link: ''
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-lg w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {initialData ? 'Editar' : 'Nuevo'} Trabajo
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          onSave(formData);
+          onClose();
+        }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Título
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Descripción
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              rows={3}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              URL de la imagen
+            </label>
+            <input
+              type="url"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Enlace (opcional)
+            </label>
+            <input
+              type="url"
+              value={formData.link}
+              onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
+            >
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export const UserProfile: React.FC = () => {
   const { state } = useCultural();
   const [isEditing, setIsEditing] = useState(false);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+  const [editingPortfolioItem, setEditingPortfolioItem] = useState<PortfolioItem | undefined>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UserProfileForm>({
     resolver: zodResolver(userProfileSchema),
@@ -80,6 +198,30 @@ export const UserProfile: React.FC = () => {
     setValue('image', image);
   };
 
+  const handleCoverImageChange = (image: { data: string; type: string } | undefined) => {
+    setValue('coverImage', image);
+  };
+
+  const handleAddPortfolioItem = (item: PortfolioItem) => {
+    if (editingPortfolioItem) {
+      setPortfolioItems(portfolioItems.map(i => 
+        i === editingPortfolioItem ? item : i
+      ));
+      setEditingPortfolioItem(undefined);
+    } else {
+      setPortfolioItems([...portfolioItems, item]);
+    }
+  };
+
+  const handleEditPortfolioItem = (item: PortfolioItem) => {
+    setEditingPortfolioItem(item);
+    setShowPortfolioModal(true);
+  };
+
+  const handleDeletePortfolioItem = (item: PortfolioItem) => {
+    setPortfolioItems(portfolioItems.filter(i => i !== item));
+  };
+
   const onSubmit = (data: UserProfileForm) => {
     console.log('Profile updated:', data);
     setIsEditing(false);
@@ -95,10 +237,32 @@ export const UserProfile: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        {/* Cover Image & Profile Section */}
-        <div className="relative h-48 bg-cultural-escenicas">
+        {/* Cover Image Section */}
+        <div className="relative h-48">
+          {isEditing ? (
+            <ImageUpload
+              value={watch('coverImage')}
+              onChange={handleCoverImageChange}
+              className="w-full h-full"
+            />
+          ) : (
+            <div className={`w-full h-full ${
+              watch('coverImage')?.data
+                ? ''
+                : 'bg-cultural-escenicas'
+            }`}>
+              {watch('coverImage')?.data && (
+                <img
+                  src={watch('coverImage').data}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+          )}
+          
           <div className="absolute -bottom-16 left-6">
-            <div className="relative">
+            <div className="relative group">
               {watch('image')?.data ? (
                 <img
                   src={watch('image')?.data}
@@ -111,20 +275,37 @@ export const UserProfile: React.FC = () => {
                 </div>
               )}
               {isEditing && (
-                <div className="absolute bottom-0 right-0">
-                  <ImageUpload
-                    value={watch('image')}
-                    onChange={handleImageChange}
-                    className="w-16 h-"
-                  />
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <Upload className="h-8 w-8 text-white" />
                 </div>
               )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      handleImageChange({
+                        data: reader.result as string,
+                        type: file.type
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
 
         <div className="pt-20 px-6 pb-6">
-          {/* Profile Info */}
           {isEditing ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Basic Info */}
@@ -277,7 +458,11 @@ export const UserProfile: React.FC = () => {
                   <p className="text-gray-500 dark:text-gray-400">{watch('email')}</p>
                   {watch('birthDate') && (
                     <p className="text-gray-500 dark:text-gray-400">
-                      {format(new Date(watch('birthDate')), "d 'de' MMMM, yyyy", { locale: es })}
+                      {new Date(watch('birthDate')).toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
                     </p>
                   )}
                   <p className="text-gray-500 dark:text-gray-400 mt-2">{watch('category')}</p>
@@ -307,9 +492,13 @@ export const UserProfile: React.FC = () => {
                     Portfolio
                   </h3>
                   <button
-                    onClick={() => setShowPortfolioModal(true)}
-                    className="px-3 py-1 text-sm bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
+                    onClick={() => {
+                      setEditingPortfolioItem(undefined);
+                      setShowPortfolioModal(true);
+                    }}
+                    className="px-3 py-1 text-sm bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90 flex items-center gap-2"
                   >
+                    <Plus className="h-4 w-4" />
                     Añadir Trabajo
                   </button>
                 </div>
@@ -328,17 +517,33 @@ export const UserProfile: React.FC = () => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {item.description}
                         </p>
-                        {item.link && (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center text-cultural-escenicas hover:underline"
-                          >
-                            <LinkIcon className="h-4 w-4 mr-1" />
-                            Ver más
-                          </a>
-                        )}
+                        <div className="mt-4 flex justify-between items-center">
+                          {item.link && (
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cultural-escenicas hover:underline flex items-center gap-1"
+                            >
+                              <LinkIcon className="h-4 w-4" />
+                              Ver más
+                            </a>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditPortfolioItem(item)}
+                              className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePortfolioItem(item)}
+                              className="p-1 text-red-500 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -434,6 +639,16 @@ export const UserProfile: React.FC = () => {
           )}
         </div>
       </div>
+
+      <PortfolioModal
+        isOpen={showPortfolioModal}
+        onClose={() => {
+          setShowPortfolioModal(false);
+          setEditingPortfolioItem(undefined);
+        }}
+        onSave={handleAddPortfolioItem}
+        initialData={editingPortfolioItem}
+      />
     </div>
   );
 };
