@@ -3,7 +3,20 @@ import { ImageUpload } from '../ui/ImageUpload';
 import { useCultural } from '../../context/CulturalContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Users, CheckSquare, ContactIcon, Camera } from 'lucide-react';
+import { 
+  Calendar, 
+  Users, 
+  CheckSquare, 
+  Camera, 
+  Link as LinkIcon,
+  Instagram,
+  Facebook,
+  Twitter,
+  Globe,
+  Image as ImageIcon,
+  FileText,
+  Edit3
+} from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,7 +26,19 @@ const userProfileSchema = z.object({
   email: z.string().email('Email inválido'),
   birthDate: z.string().optional(),
   category: z.enum(['CINE Y MEDIOS AUDIOVISUALES', 'ARTES VISUALES', 'ARTES ESCÉNICAS Y MUSICALES', 'PROMOCIÓN DEL LIBRO Y LA LECTURA', 'PATRIMONIO CULTURAL', 'ECONOMÍA CULTURAL', 'OTROS']),
-  biography: z.string().max(200, 'La biografía no puede exceder las 200 palabras'),
+  biography: z.string().max(1000, 'La biografía no puede exceder las 1000 palabras'),
+  portfolio: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+    imageUrl: z.string(),
+    link: z.string().optional()
+  })).optional(),
+  socialLinks: z.object({
+    website: z.string().url().optional(),
+    instagram: z.string().optional(),
+    facebook: z.string().optional(),
+    twitter: z.string().optional()
+  }),
   image: z.object({
     data: z.string(),
     type: z.string()
@@ -22,9 +47,18 @@ const userProfileSchema = z.object({
 
 type UserProfileForm = z.infer<typeof userProfileSchema>;
 
+interface PortfolioItem {
+  title: string;
+  description: string;
+  imageUrl: string;
+  link?: string;
+}
+
 export const UserProfile: React.FC = () => {
   const { state } = useCultural();
   const [isEditing, setIsEditing] = useState(false);
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UserProfileForm>({
     resolver: zodResolver(userProfileSchema),
@@ -32,7 +66,13 @@ export const UserProfile: React.FC = () => {
       username: 'Usuario',
       email: 'usuario@example.com',
       category: 'OTROS',
-      biography: ''
+      biography: '',
+      socialLinks: {
+        website: '',
+        instagram: '',
+        facebook: '',
+        twitter: ''
+      }
     }
   });
 
@@ -45,7 +85,6 @@ export const UserProfile: React.FC = () => {
     setIsEditing(false);
   };
 
-  // Calculate statistics
   const stats = {
     events: state.events.length,
     birthdays: state.birthdays.length,
@@ -56,6 +95,7 @@ export const UserProfile: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        {/* Cover Image & Profile Section */}
         <div className="relative h-48 bg-cultural-escenicas">
           <div className="absolute -bottom-16 left-6">
             <div className="relative">
@@ -75,7 +115,7 @@ export const UserProfile: React.FC = () => {
                   <ImageUpload
                     value={watch('image')}
                     onChange={handleImageChange}
-                    className="w-8 h-8"
+                    className="w-16 h-"
                   />
                 </div>
               )}
@@ -84,8 +124,10 @@ export const UserProfile: React.FC = () => {
         </div>
 
         <div className="pt-20 px-6 pb-6">
+          {/* Profile Info */}
           {isEditing ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -114,52 +156,100 @@ export const UserProfile: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
                   )}
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Fecha de Nacimiento
-                  </label>
-                  <input
-                    type="date"
-                    {...register('birthDate')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-                  />
-                </div>
+              {/* Social Links */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Redes Sociales
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Sitio Web
+                    </label>
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <Globe className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="url"
+                        {...register('socialLinks.website')}
+                        className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Categoría
-                  </label>
-                  <select
-                    {...register('category')}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-                  >
-                    <option value="CINE Y MEDIOS AUDIOVISUALES">Cine y Medios Audiovisuales</option>
-                    <option value="ARTES VISUALES">Artes Visuales</option>
-                    <option value="ARTES ESCÉNICAS Y MUSICALES">Artes Escénicas y Musicales</option>
-                    <option value="PROMOCIÓN DEL LIBRO Y LA LECTURA">Promoción del Libro y la Lectura</option>
-                    <option value="PATRIMONIO CULTURAL">Patrimonio Cultural</option>
-                    <option value="ECONOMÍA CULTURAL">Economía Cultural</option>
-                    <option value="OTROS">Otros</option>
-                  </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Instagram
+                    </label>
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <Instagram className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="text"
+                        {...register('socialLinks.instagram')}
+                        placeholder="@usuario"
+                        className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Facebook
+                    </label>
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <Facebook className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="text"
+                        {...register('socialLinks.facebook')}
+                        placeholder="username"
+                        className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Twitter
+                    </label>
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <Twitter className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="text"
+                        {...register('socialLinks.twitter')}
+                        placeholder="@usuario"
+                        className="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Biography */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                   Biografía
                 </label>
                 <textarea
                   {...register('biography')}
-                  rows={4}
+                  rows={6}
                   className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-cultural-escenicas focus:ring focus:ring-cultural-escenicas focus:ring-opacity-50"
-                  placeholder="Cuéntanos sobre ti (máximo 200 palabras)"
+                  placeholder="Cuéntanos sobre ti..."
                 />
                 {errors.biography && (
                   <p className="mt-1 text-sm text-red-600">{errors.biography.message}</p>
                 )}
               </div>
 
+              {/* Action Buttons */}
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
@@ -178,6 +268,7 @@ export const UserProfile: React.FC = () => {
             </form>
           ) : (
             <>
+              {/* View Mode */}
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -199,6 +290,7 @@ export const UserProfile: React.FC = () => {
                 </button>
               </div>
 
+              {/* Biography Section */}
               {watch('biography') && (
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -208,6 +300,101 @@ export const UserProfile: React.FC = () => {
                 </div>
               )}
 
+              {/* Portfolio Section */}
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Portfolio
+                  </h3>
+                  <button
+                    onClick={() => setShowPortfolioModal(true)}
+                    className="px-3 py-1 text-sm bg-cultural-escenicas text-white rounded-md hover:bg-cultural-escenicas/90"
+                  >
+                    Añadir Trabajo
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {portfolioItems.map((item, index) => (
+                    <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="p-4">
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                          {item.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {item.description}
+                        </p>
+                        {item.link && (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex items-center text-cultural-escenicas hover:underline"
+                          >
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            Ver más
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Redes Sociales
+                </h3>
+                <div className="flex space-x-4">
+                  {watch('socialLinks.website') && (
+                    <a
+                      href={watch('socialLinks.website')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-cultural-escenicas"
+                    >
+                      <Globe className="h-6 w-6" />
+                    </a>
+                  )}
+                  {watch('socialLinks.instagram') && (
+                    <a
+                      href={`https://instagram.com/${watch('socialLinks.instagram')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-cultural-escenicas"
+                    >
+                      <Instagram className="h-6 w-6" />
+                    </a>
+                  )}
+                  {watch('socialLinks.facebook') && (
+                    <a
+                      href={`https://facebook.com/${watch('socialLinks.facebook')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-cultural-escenicas"
+                    >
+                      <Facebook className="h-6 w-6" />
+                    </a>
+                  )}
+                  {watch('socialLinks.twitter') && (
+                    <a
+                      href={`https://twitter.com/${watch('socialLinks.twitter')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 dark:text-gray-400 hover:text-cultural-escenicas"
+                    >
+                      <Twitter className="h-6 w-6" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Statistics */}
               <div className="border-t dark:border-gray-700 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Estadísticas

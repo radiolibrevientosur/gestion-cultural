@@ -146,7 +146,8 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="flex items-end gap-2">
           <div className="flex items-center gap-2">
-            <div className="relative" ref={attachMenuRef}>
+            
+<div className="relative" ref={attachMenuRef}>
               <button
                 type="button"
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
@@ -213,7 +214,6 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
               <Mic className="h-5 w-5" />
             </button>
           </div>
-
           <div className="flex-1">
             <textarea
               {...register('content')}
@@ -222,7 +222,6 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
               rows={1}
             />
           </div>
-
           <button
             type="submit"
             className="p-2 bg-cultural-escenicas text-white rounded-full hover:bg-cultural-escenicas/90 transition-colors disabled:opacity-50"

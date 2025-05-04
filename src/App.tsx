@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CulturalProvider } from './context/CulturalContext';
-import { Calendar, Heart, Users, Home, PlusCircle, Sun, Moon, MoreVertical, Settings, Bell, LogOut, User, Search, Star } from 'lucide-react';
+import { Calendar, Heart, Users, Home, PlusCircle, Sun, Moon, MoreVertical, Settings, Bell, LogOut, User, Search } from 'lucide-react';
 import { EventoCulturalForm } from './components/cultural/EventoCulturalForm';
 import { BirthdayForm } from './components/cultural/BirthdayForm';
 import { TaskForm } from './components/cultural/TaskForm';
@@ -163,7 +163,7 @@ function App() {
 
   const navigationItems = [
     { view: 'inicio', icon: Home, label: 'Inicio', color: 'cultural-escenicas' },
-    { view: 'favoritos', icon: Star, label: 'Favoritos', color: 'cultural-visuales' },
+    { view: 'favoritos', icon: Heart, label: 'Favoritos', color: 'cultural-visuales' },
     { view: 'crear', icon: PlusCircle, label: 'Crear', color: 'cultural-escenicas' },
     { view: 'calendario', icon: Calendar, label: 'Calendario', color: 'cultural-musicales' },
     { view: 'contactos', icon: Users, label: 'Contactos', color: 'cultural-musicales' }
@@ -188,7 +188,6 @@ function App() {
   return (
     <CulturalProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <OfflineIndicator />
         {showNotifications && <NotificationList onClose={() => setShowNotifications(false)} />}
         {showSearchModal && <SearchModal isOpen={showSearchModal} onClose={() => setShowSearchModal(false)} />}
         
@@ -203,6 +202,7 @@ function App() {
               </div>
               
               <div className="flex items-center space-x-4">
+                <OfflineIndicator />
                 <button
                   onClick={() => setShowSearchModal(true)}
                   className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -220,7 +220,6 @@ function App() {
 
                   {isMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-50">
-                      {/* Menú de navegación mejorado */}
                       <button
                         onClick={() => setShowNotifications(true)}
                         className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
@@ -245,7 +244,7 @@ function App() {
                         className="w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
                       >
                         <User className="h-4 w-4 mr-2" />
-                        Mi Cuenta
+                        Mi Perfil
                       </button>
 
                       <button
