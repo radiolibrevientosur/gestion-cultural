@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import type { CulturalEvent, ArtistBirthday, CulturalTask, Contact, CulturalContextType, CulturalAction, Notification, ReactionType, Comment, PressArticle, Post } from '../types/cultural';
+import type { CulturalEvent, ArtistBirthday, CulturalTask, Contact, CulturalContextType, CulturalAction, Notification, ReactionType, Comment, PressArticle, Post, User } from '../types/cultural';
 
 const initialState: CulturalContextType['state'] = {
   events: [],
@@ -8,7 +8,16 @@ const initialState: CulturalContextType['state'] = {
   contacts: [],
   notifications: [],
   pressArticles: [],
-  posts: []
+  posts: [],
+  currentUser: {
+    id: '1',
+    username: 'usuario',
+    name: 'Usuario',
+    followers: [],
+    following: [],
+    posts: []
+  },
+  users: []
 };
 
 const CulturalContext = createContext<CulturalContextType | null>(null);
@@ -53,7 +62,9 @@ const loadInitialState = (): CulturalContextType['state'] => {
         date: new Date(n.date)
       })),
       pressArticles: (parsedState.pressArticles || []).map(parseEntity<PressArticle>),
-      posts: (parsedState.posts || []).map(parseEntity<Post>)
+      posts: (parsedState.posts || []).map(parseEntity<Post>),
+      currentUser: parsedState.currentUser || initialState.currentUser,
+      users: parsedState.users || []
     };
   } catch (error) {
     console.error('Error loading state:', error);
@@ -97,6 +108,34 @@ const updateEntityWithComment = <T extends { id: string; comments: Comment[] }>(
 const culturalReducer = (state: CulturalContextType['state'], action: CulturalAction): CulturalContextType['state'] => {
   try {
     switch (action.type) {
+      case 'FOLLOW_USER':
+        return {
+          ...state,
+          currentUser: {
+            ...state.currentUser,
+            following: [...state.currentUser.following, action.payload]
+          },
+          users: state.users.map(user => 
+            user.id === action.payload
+              ? { ...user, followers: [...user.followers, state.currentUser.id] }
+              : user
+          )
+        };
+
+      case 'UNFOLLOW_USER':
+        return {
+          ...state,
+          currentUser: {
+            ...state.currentUser,
+            following: state.currentUser.following.filter(id => id !== action.payload)
+          },
+          users: state.users.map(user => 
+            user.id === action.payload
+              ? { ...user, followers: user.followers.filter(id => id !== state.currentUser.id) }
+              : user
+          )
+        };
+
       case 'ADD_REACTION':
         return {
           ...state,
