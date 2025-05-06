@@ -71,7 +71,7 @@ export const Feed: React.FC<FeedProps> = ({ userId }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {userId ? 'Publicaciones del Usuario' : 'Feed General'}
+          {userId ? 'Mis Publicaciones' : 'Feed General'}
         </h2>
         <div className="relative">
           <button
