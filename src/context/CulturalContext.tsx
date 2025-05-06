@@ -108,6 +108,46 @@ const updateEntityWithComment = <T extends { id: string; comments: Comment[] }>(
 const culturalReducer = (state: CulturalContextType['state'], action: CulturalAction): CulturalContextType['state'] => {
   try {
     switch (action.type) {
+      case 'ADD_BIRTHDAY':
+        return {
+          ...state,
+          birthdays: [action.payload, ...state.birthdays]
+        };
+
+      case 'UPDATE_BIRTHDAY':
+        return {
+          ...state,
+          birthdays: state.birthdays.map(birthday =>
+            birthday.id === action.payload.id ? action.payload : birthday
+          )
+        };
+
+      case 'DELETE_BIRTHDAY':
+        return {
+          ...state,
+          birthdays: state.birthdays.filter(birthday => birthday.id !== action.payload)
+        };
+
+      case 'ADD_TASK':
+        return {
+          ...state,
+          tasks: [action.payload, ...state.tasks]
+        };
+
+      case 'UPDATE_TASK':
+        return {
+          ...state,
+          tasks: state.tasks.map(task =>
+            task.id === action.payload.id ? action.payload : task
+          )
+        };
+
+      case 'DELETE_TASK':
+        return {
+          ...state,
+          tasks: state.tasks.filter(task => task.id !== action.payload)
+        };
+
       case 'FOLLOW_USER':
         return {
           ...state,

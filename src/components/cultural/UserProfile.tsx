@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCultural } from '../../context/CulturalContext';
 import { ImageUpload } from '../ui/ImageUpload';
+import { Feed } from './Feed';
 import { 
   User, 
   Settings, 
@@ -17,12 +18,22 @@ import {
   Calendar,
   Briefcase,
   Plus,
-  Trash
+  Trash,
+  Image
 } from 'lucide-react';
-import { PostCard } from './PostCard';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { WorkItem, Achievement } from '../../types/cultural';
+import type { WorkItem, Achievement, Category } from '../../types/cultural';
+
+const CATEGORIES: Category[] = [
+  "CINE Y MEDIOS AUDIOVISUALES",
+  "ARTES VISUALES",
+  "ARTES ESCÉNICAS Y MUSICALES",
+  "PROMOCIÓN DEL LIBRO Y LA LECTURA",
+  "PATRIMONIO CULTURAL",
+  "ECONOMÍA CULTURAL",
+  "OTROS"
+];
 
 export const UserProfile: React.FC = () => {
   const { state, dispatch } = useCultural();
@@ -31,6 +42,10 @@ export const UserProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'posts'|'portfolio'|'gallery'|'achievements'>('posts');
   const [newWork, setNewWork] = useState<Partial<WorkItem>>({});
   const [newAchievement, setNewAchievement] = useState<Partial<Achievement>>({});
+  const [newGalleryItem, setNewGalleryItem] = useState<{ image?: { data: string; type: string }; title: string; description: string }>({
+    title: '',
+    description: ''
+  });
 
   const handleSaveProfile = () => {
     dispatch({
@@ -41,14 +56,14 @@ export const UserProfile: React.FC = () => {
   };
 
   const handleAddWork = () => {
-    if (!newWork.title || !newWork.description) return;
+    if (!newWork.title || !newWork.description || !newWork.category) return;
 
     const work: WorkItem = {
       id: crypto.randomUUID(),
       title: newWork.title,
       description: newWork.description,
       date: new Date(newWork.date || Date.now()),
-      category: newWork.category || 'OTROS',
+      category: newWork.category,
       image: newWork.image,
       url: newWork.url,
       isCurrent: newWork.isCurrent || false
@@ -88,6 +103,26 @@ export const UserProfile: React.FC = () => {
     setNewAchievement({});
   };
 
+  const handleAddGalleryItem = () => {
+    if (!newGalleryItem.image || !newGalleryItem.title) return;
+
+    const galleryItem = {
+      id: crypto.randomUUID(),
+      ...newGalleryItem,
+      date: new Date()
+    };
+
+    setEditedProfile({
+      ...editedProfile,
+      portfolio: {
+        ...editedProfile.portfolio!,
+        gallery: [...(editedProfile.portfolio?.gallery || []), galleryItem]
+      }
+    });
+
+    setNewGalleryItem({ title: '', description: '' });
+  };
+
   const handleDeleteWork = (workId: string) => {
     setEditedProfile({
       ...editedProfile,
@@ -108,7 +143,233 @@ export const UserProfile: React.FC = () => {
     });
   };
 
-  const userPosts = state.posts.filter(post => post.userId === state.currentUser.id);
+  const handleDeleteGalleryItem = (itemId: string) => {
+    setEditedProfile({
+      ...editedProfile,
+      portfolio: {
+        ...editedProfile.portfolio!,
+        gallery: editedProfile.portfolio!.gallery.filter(item => item.id !== itemId)
+      }
+    });
+  };
+
+  const renderPortfolioTab = () => (
+    <div className="space-y-8">
+      {isEditing ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Nuevo Trabajo
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Título"
+              value={newWork.title || ''}
+              onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <select
+              value={newWork.category || ''}
+              onChange={(e) => setNewWork({ ...newWork, category: e.target.value as Category })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            >
+              <option value="">Seleccionar categoría...</option>
+              {CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <textarea
+              placeholder="Descripción"
+              value={newWork.description || ''}
+              onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <input
+              type="url"
+              placeholder="URL (opcional)"
+              value={newWork.url || ''}
+              onChange={(e) => setNewWork({ ...newWork, url: e.target.value })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <div className="col-span-2">
+              <ImageUpload
+                value={newWork.image}
+                onChange={(image) => setNewWork({ ...newWork, image })}
+              />
+            </div>
+            <button
+              onClick={handleAddWork}
+              className="col-span-2 bg-cultural-escenicas text-white p-2 rounded-lg"
+            >
+              Agregar Trabajo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {editedProfile.portfolio?.works.map(work => (
+          <div key={work.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            {work.image && (
+              <img src={work.image.data} alt={work.title} className="w-full h-48 object-cover" />
+            )}
+            <div className="p-4">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{work.title}</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{work.description}</p>
+              {isEditing && (
+                <button
+                  onClick={() => handleDeleteWork(work.id)}
+                  className="mt-2 text-red-500 hover:text-red-700"
+                >
+                  <Trash className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderGalleryTab = () => (
+    <div className="space-y-8">
+      {isEditing && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Nueva Imagen
+          </h3>
+          <div className="space-y-4">
+            <ImageUpload
+              value={newGalleryItem.image}
+              onChange={(image) => setNewGalleryItem({ ...newGalleryItem, image })}
+            />
+            <input
+              type="text"
+              placeholder="Título"
+              value={newGalleryItem.title}
+              onChange={(e) => setNewGalleryItem({ ...newGalleryItem, title: e.target.value })}
+              className="w-full p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <textarea
+              placeholder="Descripción"
+              value={newGalleryItem.description}
+              onChange={(e) => setNewGalleryItem({ ...newGalleryItem, description: e.target.value })}
+              className="w-full p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <button
+              onClick={handleAddGalleryItem}
+              className="w-full bg-cultural-escenicas text-white p-2 rounded-lg"
+            >
+              Agregar a Galería
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {editedProfile.portfolio?.gallery?.map(item => (
+          <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <img src={item.image.data} alt={item.title} className="w-full h-48 object-cover" />
+            <div className="p-4">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+              {isEditing && (
+                <button
+                  onClick={() => handleDeleteGalleryItem(item.id)}
+                  className="mt-2 text-red-500 hover:text-red-700"
+                >
+                  <Trash className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAchievementsTab = () => (
+    <div className="space-y-8">
+      {isEditing && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Nuevo Logro
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Título"
+              value={newAchievement.title || ''}
+              onChange={(e) => setNewAchievement({ ...newAchievement, title: e.target.value })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <input
+              type="text"
+              placeholder="Institución"
+              value={newAchievement.institution || ''}
+              onChange={(e) => setNewAchievement({ ...newAchievement, institution: e.target.value })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <select
+              value={newAchievement.type || 'award'}
+              onChange={(e) => setNewAchievement({ ...newAchievement, type: e.target.value as Achievement['type'] })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            >
+              <option value="award">Premio</option>
+              <option value="recognition">Reconocimiento</option>
+              <option value="certification">Certificación</option>
+            </select>
+            <input
+              type="date"
+              value={newAchievement.date?.toISOString().split('T')[0] || ''}
+              onChange={(e) => setNewAchievement({ ...newAchievement, date: new Date(e.target.value) })}
+              className="p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <textarea
+              placeholder="Descripción"
+              value={newAchievement.description || ''}
+              onChange={(e) => setNewAchievement({ ...newAchievement, description: e.target.value })}
+              className="col-span-2 p-2 border rounded-lg dark:bg-gray-700"
+            />
+            <button
+              onClick={handleAddAchievement}
+              className="col-span-2 bg-cultural-escenicas text-white p-2 rounded-lg"
+            >
+              Agregar Logro
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {editedProfile.portfolio?.achievements.map(achievement => (
+          <div key={achievement.id} className="bg-white dark:bg-gray-800 rounded-lg p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {achievement.title}
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {achievement.institution} • {format(achievement.date, 'd MMM yyyy', { locale: es })}
+                </p>
+                <p className="mt-2 text-gray-700 dark:text-gray-300">
+                  {achievement.description}
+                </p>
+              </div>
+              {isEditing && (
+                <button
+                  onClick={() => handleDeleteAchievement(achievement.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
@@ -128,12 +389,14 @@ export const UserProfile: React.FC = () => {
       {/* Profile Header */}
       <div className="relative px-6 py-4">
         <div className="flex items-end -mt-16">
-          <ImageUpload
-            value={editedProfile.avatar}
-            onChange={(image) => setEditedProfile({ ...editedProfile, avatar: image })}
-            variant="profile"
-            className="relative"
-          />
+          <div className="relative">
+            <ImageUpload
+              value={editedProfile.avatar}
+              onChange={(image) => setEditedProfile({ ...editedProfile, avatar: image })}
+              variant="profile"
+              className="w-32 h-32"
+            />
+          </div>
           <div className="ml-4 flex-1">
             <div className="flex items-center justify-between">
               <div>
@@ -176,7 +439,7 @@ export const UserProfile: React.FC = () => {
         <div className="flex justify-center space-x-8 mt-6 border-t border-b border-gray-200 dark:border-gray-700 py-4">
           <div className="text-center">
             <span className="block text-2xl font-bold text-gray-900 dark:text-white">
-              {userPosts.length}
+              {state.posts.filter(post => post.userId === state.currentUser.id).length}
             </span>
             <span className="text-gray-600 dark:text-gray-400">Publicaciones</span>
           </div>
@@ -259,7 +522,60 @@ export const UserProfile: React.FC = () => {
                   placeholder="@usuario"
                 />
               </div>
-              {/* Repeat for other social networks */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Twitter
+                </label>
+                <input
+                  type="text"
+                  value={editedProfile.socialLinks?.twitter || ''}
+                  onChange={(e) => setEditedProfile({
+                    ...editedProfile,
+                    socialLinks: {
+                      ...editedProfile.socialLinks,
+                      twitter: e.target.value
+                    }
+                  })}
+                  className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  placeholder="@usuario"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Facebook
+                </label>
+                <input
+                  type="text"
+                  value={editedProfile.socialLinks?.facebook || ''}
+                  onChange={(e) => setEditedProfile({
+                    ...editedProfile,
+                    socialLinks: {
+                      ...editedProfile.socialLinks,
+                      facebook: e.target.value
+                    }
+                  })}
+                  className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  placeholder="facebook.com/usuario"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Website
+                </label>
+                <input
+                  type="text"
+                  value={editedProfile.socialLinks?.website || ''}
+                  onChange={(e) => setEditedProfile({
+                    ...editedProfile,
+                    socialLinks: {
+                      ...editedProfile.socialLinks,
+                      website: e.target.value
+                    }
+                  })}
+                  className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  placeholder="https://..."
+                />
+              </div>
             </div>
           ) : (
             <div className="flex flex-wrap gap-4">
@@ -274,12 +590,44 @@ export const UserProfile: React.FC = () => {
                   <span>{state.currentUser.socialLinks.instagram}</span>
                 </a>
               )}
-              {/* Repeat for other social networks */}
+              {state.currentUser.socialLinks?.twitter && (
+                <a
+                  href={`https://twitter.com/${state.currentUser.socialLinks.twitter.replace('@', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-400 hover:text-blue-500"
+                >
+                  <Twitter className="h-5 w-5" />
+                  <span>{state.currentUser.socialLinks.twitter}</span>
+                </a>
+              )}
+              {state.currentUser.socialLinks?.facebook && (
+                <a
+                  href={state.currentUser.socialLinks.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                >
+                  <Facebook className="h-5 w-5" />
+                  <span>{state.currentUser.socialLinks.facebook}</span>
+                </a>
+              )}
+              {state.currentUser.socialLinks?.website && (
+                <a
+                  href={state.currentUser.socialLinks.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
+                >
+                  <Globe className="h-5 w-5" />
+                  <span>{state.currentUser.socialLinks.website}</span>
+                </a>
+              )}
             </div>
           )}
         </div>
 
-        {/* Portfolio Tabs */}
+        {/* Tabs Navigation */}
         <div className="mt-8">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8">
@@ -326,354 +674,15 @@ export const UserProfile: React.FC = () => {
             </nav>
           </div>
 
+          {/* Tab Content */}
           <div className="mt-6">
             {activeTab === 'posts' && (
-              <div className="space-y-6">
-                {userPosts.map(post => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-                {userPosts.length === 0 && (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    No hay publicaciones para mostrar
-                  </p>
-                )}
-              </div>
+              <Feed userId={state.currentUser.id} />
             )}
 
-            {activeTab === 'portfolio' && (
-              <div className="space-y-6">
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Categoría
-                      </label>
-                      <select
-                        value={editedProfile.portfolio?.category || ''}
-                        onChange={(e) => setEditedProfile({
-                          ...editedProfile,
-                          portfolio: {
-                            ...editedProfile.portfolio,
-                            category: e.target.value as any
-                          }
-                        })}
-                        className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                      >
-                        <option value="">Seleccionar categoría...</option>
-                        {/* Add categories */}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Disciplina
-                      </label>
-                      <input
-                        type="text"
-                        value={editedProfile.portfolio?.discipline || ''}
-                        onChange={(e) => setEditedProfile({
-                          ...editedProfile,
-                          portfolio: {
-                            ...editedProfile.portfolio,
-                            discipline: e.target.value
-                          }
-                        })}
-                        className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                        placeholder="Tu disciplina artística"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Trayectoria
-                      </label>
-                      <textarea
-                        value={editedProfile.portfolio?.trajectory || ''}
-                        onChange={(e) => setEditedProfile({
-                          ...editedProfile,
-                          portfolio: {
-                            ...editedProfile.portfolio,
-                            trajectory: e.target.value
-                          }
-                        })}
-                        className="w-full p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                        rows={6}
-                        placeholder="Describe tu trayectoria artística..."
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {state.currentUser.portfolio ? (
-                      <>
-                        <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            Información Profesional
-                          </h3>
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                              <Award className="h-5 w-5" />
-                              <span>Categoría: {state.currentUser.portfolio.category}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                              <Briefcase className="h-5 w-5" />
-                              <span>Disciplina: {state.currentUser.portfolio.discipline}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="prose dark:prose-invert max-w-none">
-                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            Trayectoria
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-300">
-                            {state.currentUser.portfolio.trajectory}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                        No hay información de portfolio disponible
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'gallery' && (
-              <div className="space-y-6">
-                {isEditing && (
-                  <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Nuevo Trabajo
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Título
-                        </label>
-                        <input
-                          type="text"
-                          value={newWork.title || ''}
-                          onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Descripción
-                        </label>
-                        <textarea
-                          value={newWork.description || ''}
-                          onChange={(e) => setNewWork({ ...newWork, description: e.target.value })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Fecha
-                        </label>
-                        <input
-                          type="date"
-                          value={newWork.date ? format(new Date(newWork.date), 'yyyy-MM-dd') : ''}
-                          onChange={(e) => setNewWork({ ...newWork, date: new Date(e.target.value) })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Imagen
-                        </label>
-                        <ImageUpload
-                          value={newWork.image}
-                          onChange={(image) => setNewWork({ ...newWork, image })}
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={newWork.isCurrent || false}
-                          onChange={(e) => setNewWork({ ...newWork, isCurrent: e.target.checked })}
-                          className="mr-2"
-                        />
-                        <label className="text-sm text-gray-700 dark:text-gray-300">
-                          Trabajo Actual
-                        </label>
-                      </div>
-                      <button
-                        onClick={handleAddWork}
-                        className="w-full bg-cultural-escenicas text-white py-2 rounded-lg hover:bg-cultural-escenicas/90"
-                      >
-                        Agregar Trabajo
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {editedProfile.portfolio?.works.map(work => (
-                    <div key={work.id} className="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
-                      {work.image && (
-                        <img
-                          src={work.image.data}
-                          alt={work.title}
-                          className="w-full h-48 object-cover"
-                        />
-                      )}
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900 dark:text-white">
-                            {work.title}
-                          </h4>
-                          {isEditing && (
-                            <button
-                              onClick={() => handleDeleteWork(work.id)}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                          {work.description}
-                        </p>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-cultural-escenicas">
-                            {work.isCurrent ? 'Trabajo Actual' : 'Trabajo Anterior'}
-                          </span>
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {format(work.date, 'MMM yyyy', { locale: es })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'achievements' && (
-              <div className="space-y-6">
-                {isEditing && (
-                  <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Nuevo Logro
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Título
-                        </label>
-                        <input
-                          type="text"
-                          value={newAchievement.title || ''}
-                          onChange={(e) => setNewAchievement({ ...newAchievement, title: e.target.value })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Descripción
-                        </label>
-                        <textarea
-                          value={newAchievement.description || ''}
-                          onChange={(e) => setNewAchievement({ ...newAchievement, description: e.target.value })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Institución
-                        </label>
-                        <input
-                          type="text"
-                          value={newAchievement.institution || ''}
-                          onChange={(e) => setNewAchievement({ ...newAchievement, institution: e.target.value })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Fecha
-                        </label>
-                        <input
-                          type="date"
-                          value={newAchievement.date ? format(new Date(newAchievement.date), 'yyyy-MM-dd') : ''}
-                          onChange={(e) => setNewAchievement({ ...newAchievement, date: new Date(e.target.value) })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Tipo
-                        </label>
-                        <select
-                          value={newAchievement.type || 'award'}
-                          onChange={(e) => setNewAchievement({ ...newAchievement, type: e.target.value as any })}
-                          className="w-full p-2 bg-white dark:bg-gray-800 rounded-lg"
-                        >
-                          <option value="award">Premio</option>
-                          <option value="recognition">Reconocimiento</option>
-                          <option value="certification">Certificación</option>
-                        </select>
-                      </div>
-                      <button
-                        onClick={handleAddAchievement}
-                        className="w-full bg-cultural-escenicas text-white py-2 rounded-lg hover:bg-cultural-escenicas/90"
-                      >
-                        Agregar Logro
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  {editedProfile.portfolio?.achievements.map(achievement => (
-                    <div key={achievement.id} className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                            {achievement.title}
-                          </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {achievement.institution}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {format(achievement.date, 'MMM yyyy', { locale: es })}
-                          </span>
-                          {isEditing && (
-                            <button
-                              onClick={() => handleDeleteAchievement(achievement.id)}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <p className="mt-4 text-gray-600 dark:text-gray-300">
-                        {achievement.description}
-                      </p>
-                      <div className="mt-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
-                          achievement.type === 'award'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : achievement.type === 'recognition'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {achievement.type === 'award' ? 'Premio' :
-                           achievement.type === 'recognition' ? 'Reconocimiento' :
-                           'Certificación'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeTab === 'portfolio' && renderPortfolioTab()}
+            {activeTab === 'gallery' && renderGalleryTab()}
+            {activeTab === 'achievements' && renderAchievementsTab()}
           </div>
         </div>
       </div>

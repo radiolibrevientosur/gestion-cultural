@@ -3,17 +3,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCultural } from '../../context/CulturalContext';
-import { ImageUpload } from '../ui/ImageUpload';
 import { Image, FileText, Video, Send, X, Mic, Smile, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Post, Comment, Media } from '../../types/cultural';
+import type { Post, Media } from '../../types/cultural';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 
 const postSchema = z.object({
   content: z.string().max(280, 'El contenido no puede exceder los 280 caracteres'),
-  author: z.string().min(2, 'El autor es requerido'),
+  author: z.string().min(2, 'El autor es requerido').default('Usuario'),
 });
 
 interface QuickPostProps {
@@ -22,7 +21,7 @@ interface QuickPostProps {
 }
 
 export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
-  const { dispatch } = useCultural();
+  const { dispatch, state } = useCultural();
   const [media, setMedia] = useState<Media[]>([]);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -41,7 +40,9 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
     defaultValues: post ? {
       content: post.content,
       author: post.author
-    } : undefined
+    } : {
+      author: state.currentUser.name
+    }
   });
 
   useEffect(() => {
@@ -123,7 +124,8 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
     const newPost: Post = {
       id: post?.id || crypto.randomUUID(),
       content: data.content,
-      author: data.author,
+      author: state.currentUser.name,
+      userId: state.currentUser.id,
       date: new Date(),
       media: media.length > 0 ? media : undefined,
       reactions: post?.reactions || { like: 0, love: 0, celebrate: 0, interesting: 0 },
@@ -146,8 +148,7 @@ export const QuickPost: React.FC<QuickPostProps> = ({ post, onEdit }) => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="flex items-end gap-2">
           <div className="flex items-center gap-2">
-            
-<div className="relative" ref={attachMenuRef}>
+            <div className="relative" ref={attachMenuRef}>
               <button
                 type="button"
                 onClick={() => setShowAttachMenu(!showAttachMenu)}

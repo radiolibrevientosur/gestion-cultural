@@ -31,12 +31,21 @@ export interface Achievement {
   type: 'award' | 'recognition' | 'certification';
 }
 
+export interface GalleryItem {
+  id: string;
+  image: { data: string; type: string };
+  title: string;
+  description: string;
+  date: Date;
+}
+
 export interface CulturalPortfolio {
   category: Category;
   discipline: string;
   trajectory: string;
   achievements: Achievement[];
   works: WorkItem[];
+  gallery: GalleryItem[];
 }
 
 export type ReactionType = 'like' | 'love' | 'celebrate' | 'interesting';
@@ -102,6 +111,142 @@ export interface LinkPreview {
   description?: string;
   image?: string;
 }
+
+export interface CulturalEvent extends InteractiveEntity {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  locationUrl?: string;
+  category: Category;
+  eventType: string;
+  targetAudience: 'Infantil' | 'Adultos' | 'Todos';
+  cost: {
+    type: 'free' | 'paid';
+    amount?: number;
+  };
+  responsiblePerson: {
+    name: string;
+    phone: string;
+    socialMedia?: string;
+  };
+  technicalRequirements: string[];
+  image?: {
+    data: string;
+    type: string;
+  };
+  tags: string[];
+  recurrence: {
+    type: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
+    interval?: number;
+    endDate?: string;
+    daysOfWeek?: number[];
+  };
+}
+
+export interface ArtistBirthday extends InteractiveEntity {
+  id: string;
+  name: string;
+  birthDate: Date;
+  role: string;
+  discipline: string;
+  trajectory: string;
+  contactInfo: {
+    email: string;
+    phone: string;
+  };
+  image?: {
+    data: string;
+    type: string;
+  };
+}
+
+export interface CulturalTask extends InteractiveEntity {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  assignedTo: string;
+  dueDate: Date;
+  checklist: Array<{
+    id: string;
+    task: string;
+    completed: boolean;
+  }>;
+}
+
+export interface Contact {
+  id: string;
+  name: string;
+  role?: string;
+  discipline?: string;
+  email: string;
+  phone?: string;
+  whatsapp?: string;
+  instagram?: string;
+  facebook?: string;
+  notes?: string;
+  image?: {
+    data: string;
+    type: string;
+  };
+  isFavorite: boolean;
+}
+
+export interface PressArticle extends InteractiveEntity {
+  id: string;
+  title: string;
+  author: string;
+  date: Date;
+  summary: string;
+  content: string;
+  category: Category;
+  tags: string[];
+  image?: {
+    data: string;
+    type: string;
+  };
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'event' | 'birthday' | 'task' | 'system';
+  read: boolean;
+  date: Date;
+  entityId?: string;
+}
+
+export type CulturalAction =
+  | { type: 'ADD_EVENT'; payload: CulturalEvent }
+  | { type: 'UPDATE_EVENT'; payload: CulturalEvent }
+  | { type: 'DELETE_EVENT'; payload: string }
+  | { type: 'ADD_BIRTHDAY'; payload: ArtistBirthday }
+  | { type: 'UPDATE_BIRTHDAY'; payload: ArtistBirthday }
+  | { type: 'DELETE_BIRTHDAY'; payload: string }
+  | { type: 'ADD_TASK'; payload: CulturalTask }
+  | { type: 'UPDATE_TASK'; payload: CulturalTask }
+  | { type: 'DELETE_TASK'; payload: string }
+  | { type: 'ADD_CONTACT'; payload: Contact }
+  | { type: 'UPDATE_CONTACT'; payload: Contact }
+  | { type: 'DELETE_CONTACT'; payload: string }
+  | { type: 'ADD_NOTIFICATION'; payload: Notification }
+  | { type: 'MARK_NOTIFICATION_READ'; payload: string }
+  | { type: 'DELETE_NOTIFICATION'; payload: string }
+  | { type: 'ADD_PRESS_ARTICLE'; payload: PressArticle }
+  | { type: 'UPDATE_PRESS_ARTICLE'; payload: PressArticle }
+  | { type: 'DELETE_PRESS_ARTICLE'; payload: string }
+  | { type: 'ADD_POST'; payload: Post }
+  | { type: 'UPDATE_POST'; payload: Post }
+  | { type: 'DELETE_POST'; payload: string }
+  | { type: 'ADD_REACTION'; payload: { entityId: string; reactionType: ReactionType } }
+  | { type: 'ADD_COMMENT'; payload: { entityId: string; comment: Comment } }
+  | { type: 'FOLLOW_USER'; payload: string }
+  | { type: 'UNFOLLOW_USER'; payload: string }
+  | { type: 'UPDATE_USER'; payload: User };
 
 export interface CulturalContextType {
   state: {
