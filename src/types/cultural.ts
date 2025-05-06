@@ -65,6 +65,18 @@ export interface Comment {
   author: string;
   text: string;
   date: Date;
+  parentId?: string;
+  replies?: Comment[];
+  mentions?: string[];
+  tags?: string[];
+}
+
+export interface CustomReaction {
+  id: string;
+  emoji: string;
+  name: string;
+  count: number;
+  users: string[];
 }
 
 export interface User {
@@ -92,8 +104,13 @@ export interface User {
 export interface InteractiveEntity {
   id: string;
   reactions: Record<ReactionType, number>;
+  customReactions: CustomReaction[];
   comments: Comment[];
   isFavorite: boolean;
+  shares: number;
+  collaborators?: string[];
+  tags: string[];
+  mentions: string[];
 }
 
 export interface Post extends InteractiveEntity {
@@ -242,7 +259,7 @@ export type CulturalAction =
   | { type: 'ADD_POST'; payload: Post }
   | { type: 'UPDATE_POST'; payload: Post }
   | { type: 'DELETE_POST'; payload: string }
-  | { type: 'ADD_REACTION'; payload: { entityId: string; reactionType: ReactionType } }
+  | { type: 'ADD_REACTION'; payload: { entityId: string; reactionType: ReactionType | CustomReaction } }
   | { type: 'ADD_COMMENT'; payload: { entityId: string; comment: Comment } }
   | { type: 'FOLLOW_USER'; payload: string }
   | { type: 'UNFOLLOW_USER'; payload: string }

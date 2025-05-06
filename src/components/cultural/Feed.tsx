@@ -3,6 +3,7 @@ import { useCultural } from '../../context/CulturalContext';
 import { PostCard } from './PostCard';
 import { EventCard } from './EventCard';
 import { PressArticleCard } from './PressArticleCard';
+import { QuickPost } from './QuickPost';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import type { Post, CulturalEvent, PressArticle } from '../../types/cultural';
 
@@ -130,6 +131,8 @@ export const Feed: React.FC<FeedProps> = ({ userId }) => {
           )}
         </div>
       </div>
+
+      <QuickPost />
 
       <div className="space-y-6">
         {feedItems.length > 0 ? (

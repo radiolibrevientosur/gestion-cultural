@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import type { CulturalEvent, ArtistBirthday, CulturalTask, Contact, CulturalContextType, CulturalAction, Notification, ReactionType, Comment, PressArticle, Post, User } from '../types/cultural';
+import type { CulturalEvent, ArtistBirthday, CulturalTask, Contact, CulturalContextType, CulturalAction, Notification, ReactionType, Comment, PressArticle, Post, User, CustomReaction } from '../types/cultural';
 
 const initialState: CulturalContextType['state'] = {
   events: [],
@@ -29,7 +29,7 @@ const loadInitialState = (): CulturalContextType['state'] => {
 
     const parsedState = JSON.parse(savedState);
     
-    const parseEntity = <T extends { date: string },>(
+    const parseEntity = <T extends { date: string }>(
       entity: T
     ): T => ({
       ...entity,
@@ -40,6 +40,7 @@ const loadInitialState = (): CulturalContextType['state'] => {
         celebrate: 0, 
         interesting: 0 
       },
+      customReactions: entity.customReactions || [],
       comments: (entity.comments || []).map((comment: any) => ({
         ...comment,
         date: new Date(comment.date)
@@ -72,22 +73,44 @@ const loadInitialState = (): CulturalContextType['state'] => {
   }
 };
 
-const updateEntityWithReaction = <T extends { id: string; reactions: Record<ReactionType, number> }>(
+const updateEntityWithReaction = <T extends { id: string; reactions: Record<ReactionType, number>; customReactions: CustomReaction[] }>(
   entities: T[],
   entityId: string,
-  reactionType: ReactionType
+  reaction: ReactionType | CustomReaction
 ): T[] => {
-  return entities.map(entity =>
-    entity.id === entityId
-      ? {
-          ...entity,
-          reactions: {
-            ...entity.reactions,
-            [reactionType]: (entity.reactions[reactionType] || 0) + 1
-          }
+  return entities.map(entity => {
+    if (entity.id !== entityId) return entity;
+
+    if (typeof reaction === 'string') {
+      return {
+        ...entity,
+        reactions: {
+          ...entity.reactions,
+          [reaction]: (entity.reactions[reaction] || 0) + 1
         }
-      : entity
-  );
+      };
+    } else {
+      const existingReactionIndex = entity.customReactions.findIndex(r => r.emoji === reaction.emoji);
+      
+      if (existingReactionIndex > -1) {
+        const updatedCustomReactions = [...entity.customReactions];
+        updatedCustomReactions[existingReactionIndex] = {
+          ...updatedCustomReactions[existingReactionIndex],
+          count: updatedCustomReactions[existingReactionIndex].count + 1,
+          users: [...updatedCustomReactions[existingReactionIndex].users, reaction.users[0]]
+        };
+        return {
+          ...entity,
+          customReactions: updatedCustomReactions
+        };
+      } else {
+        return {
+          ...entity,
+          customReactions: [...entity.customReactions, reaction]
+        };
+      }
+    }
+  });
 };
 
 const updateEntityWithComment = <T extends { id: string; comments: Comment[] }>(
@@ -95,14 +118,31 @@ const updateEntityWithComment = <T extends { id: string; comments: Comment[] }>(
   entityId: string,
   comment: Comment
 ): T[] => {
-  return entities.map(entity =>
-    entity.id === entityId
-      ? {
-          ...entity,
-          comments: [...entity.comments, comment]
+  return entities.map(entity => {
+    if (entity.id !== entityId) return entity;
+
+    if (comment.parentId) {
+      const updatedComments = entity.comments.map(existingComment => {
+        if (existingComment.id === comment.parentId) {
+          return {
+            ...existingComment,
+            replies: [...(existingComment.replies || []), comment]
+          };
         }
-      : entity
-  );
+        return existingComment;
+      });
+
+      return {
+        ...entity,
+        comments: updatedComments
+      };
+    }
+
+    return {
+      ...entity,
+      comments: [...entity.comments, comment]
+    };
+  });
 };
 
 const culturalReducer = (state: CulturalContextType['state'], action: CulturalAction): CulturalContextType['state'] => {
@@ -176,23 +216,25 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
           )
         };
 
-      case 'ADD_REACTION':
+      case 'ADD_REACTION': {
+        const { entityId, reactionType } = action.payload;
         return {
           ...state,
-          events: updateEntityWithReaction(state.events, action.payload.entityId, action.payload.reactionType),
-          birthdays: updateEntityWithReaction(state.birthdays, action.payload.entityId, action.payload.reactionType),
-          posts: updateEntityWithReaction(state.posts, action.payload.entityId, action.payload.reactionType),
-          pressArticles: updateEntityWithReaction(state.pressArticles, action.payload.entityId, action.payload.reactionType)
+          events: updateEntityWithReaction(state.events, entityId, reactionType),
+          posts: updateEntityWithReaction(state.posts, entityId, reactionType),
+          pressArticles: updateEntityWithReaction(state.pressArticles, entityId, reactionType)
         };
+      }
 
-      case 'ADD_COMMENT':
+      case 'ADD_COMMENT': {
+        const { entityId, comment } = action.payload;
         return {
           ...state,
-          events: updateEntityWithComment(state.events, action.payload.entityId, action.payload.comment),
-          birthdays: updateEntityWithComment(state.birthdays, action.payload.entityId, action.payload.comment),
-          posts: updateEntityWithComment(state.posts, action.payload.entityId, action.payload.comment),
-          pressArticles: updateEntityWithComment(state.pressArticles, action.payload.entityId, action.payload.comment)
+          events: updateEntityWithComment(state.events, entityId, comment),
+          posts: updateEntityWithComment(state.posts, entityId, comment),
+          pressArticles: updateEntityWithComment(state.pressArticles, entityId, comment)
         };
+      }
 
       case 'ADD_EVENT':
         return {
@@ -200,7 +242,11 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
           events: [{
             ...action.payload,
             reactions: { like: 0, love: 0, celebrate: 0, interesting: 0 },
-            comments: []
+            customReactions: [],
+            comments: [],
+            shares: 0,
+            tags: action.payload.tags || [],
+            mentions: action.payload.mentions || []
           }, ...state.events]
         };
 
@@ -208,7 +254,13 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
         return {
           ...state,
           events: state.events.map(event =>
-            event.id === action.payload.id ? action.payload : event
+            event.id === action.payload.id ? {
+              ...action.payload,
+              reactions: event.reactions,
+              customReactions: event.customReactions,
+              comments: event.comments,
+              shares: event.shares
+            } : event
           )
         };
 
@@ -223,9 +275,12 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
           ...state,
           posts: [{
             ...action.payload,
-            reactions: action.payload.reactions || { like: 0, love: 0, celebrate: 0, interesting: 0 },
-            comments: action.payload.comments || [],
-            isFavorite: false
+            reactions: { like: 0, love: 0, celebrate: 0, interesting: 0 },
+            customReactions: [],
+            comments: [],
+            shares: 0,
+            tags: action.payload.tags || [],
+            mentions: action.payload.mentions || []
           }, ...state.posts]
         };
 
@@ -233,7 +288,13 @@ const culturalReducer = (state: CulturalContextType['state'], action: CulturalAc
         return {
           ...state,
           posts: state.posts.map(post =>
-            post.id === action.payload.id ? action.payload : post
+            post.id === action.payload.id ? {
+              ...action.payload,
+              reactions: post.reactions,
+              customReactions: post.customReactions,
+              comments: post.comments,
+              shares: post.shares
+            } : post
           )
         };
 

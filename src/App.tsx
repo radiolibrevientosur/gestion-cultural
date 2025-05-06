@@ -253,6 +253,5 @@ function App() {
     
   );
 }
-<>
-          <QuickPost />
+
 export default App;
